@@ -10,7 +10,7 @@ from keras.models import Model
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 
 from .config import LSTM_config
-
+import pickle
 class LSTM(object):
 
 
@@ -68,13 +68,15 @@ class LSTM(object):
         early_stopping_monitor = EarlyStopping(patience=50, restore_best_weights=True)
 
         # Save the best model ... with minimal error
-        filepath = self.checkpoint_dir +"LSTM_2Layers.best"+datetime.now().strftime('%d%m%Y_%H:%M:%S')+".hdf5"
-        checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+        self.filepath = self.save_file +"LSTM_2_Layers_2.best.hdf5"
+        checkpoint = ModelCheckpoint(self.filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 
         callback_history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
                              validation_split=0.2,
                              verbose=1,
                              callbacks=[early_stopping_monitor,checkpoint])
+        with open('results.pkl', 'wb') as f:
+            pickle.dump(callback_history.history, f) 
         return callback_history
 
 
@@ -92,20 +94,21 @@ class LSTM(object):
             :rtype 5 Float tuple
             :raise -
             """
-
-            y_pred = self.model.predict(X_test)
+            # y_pred = self.model.predict(X_test)
             # print(y_pred)
             # Print accuracy if ground truth is provided
-            """
-            if y_test is not None:
-                loss_ = session.run(
-                    self.loss,
-                    feed_dict=feed_dict)
-            """
+            # result = self.model.evaluate(X_test, y_test)
+            from sklearn.metrics import classification_report 
+            import numpy as np
+            from keras.models import load_model
+            model = load_model(self.filepath)
+            result = model.evaluate(X_test, y_test)
+            y_pred = model.predict(X_test)
+            test_y_tf = np.argmax(y_test, axis=1)
+            pred_y_tf = np.argmax(y_pred, axis=1)
+            print("Classification Report:\n ", classification_report(pred_y_tf, test_y_tf),"\n")
+            return  result,y_pred
+    
 
-            result = self.model.evaluate(X_test, y_test)
 
-            
-
-            return y_pred, result
     
