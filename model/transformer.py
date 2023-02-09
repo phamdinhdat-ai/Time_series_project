@@ -114,15 +114,20 @@ class Transformer(object):
         early_stopping_monitor = EarlyStopping(patience=50, restore_best_weights=True)
 
         # Save the best model ... with minimal error
-        filepath = self.checkpoint_dir +"Transformer_6block_8head.best"+datetime.now().strftime('%d%m%Y_%H:%M:%S')+".hdf5"
-        checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+        self.filepath = self.checkpoint_dir +"Transformer_6block_4head.best.hdf5"
+        checkpoint = ModelCheckpoint(self.filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 
         callback_history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
                              validation_split=0.2,
                              verbose=1,
                              callbacks=[early_stopping_monitor,checkpoint])
+           
                              #callbacks=[PlotLossesKeras(), early_stopping_monitor, checkpoint])
+        import pickle
+        with open('results_transformer.pkl', 'wb') as f:
+            pickle.dump(callable.history, f)  
         return callback_history
+        # return callback_history
 
     def summary(self):
       self.model = self.build()
@@ -130,9 +135,19 @@ class Transformer(object):
     def evaluate(self,
         X_test,
         y_test):
-        y_pred = self.model.predict(X_test)
-        result = self.model.evaluate(X_test, y_test)
+        # y_pred = self.model.predict(X_test)
+        # result = self.model.evaluate(X_test, y_test)
+        from sklearn.metrics import classification_report 
+        import numpy as np
+        from keras.models import load_model
+        model = load_model(self.filepath)
+        result = model.evaluate(X_test, y_test)
+        y_pred = model.predict(X_test)
+        test_y_tf = np.argmax(y_test, axis=1)
+        pred_y_tf = np.argmax(y_pred, axis=1)
+        print("Classification Report:\n ", classification_report(pred_y_tf, test_y_tf),"\n")
         return result, y_pred
+
     
 
 # model = Transformer()
