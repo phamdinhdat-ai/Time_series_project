@@ -1,0 +1,140 @@
+Ex1
+lstm: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 10,
+  n_features: 3,
+  activation: "tanh",
+}
+cnn: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 10,
+  n_features: 3,
+  activation: "tanh",
+}
+
+transformer: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 10,
+  n_features: 3,
+  activation: "tanh",
+}
+
+
+mlp: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 10,
+  n_features: 3,
+  activation: "tanh",
+}
+
+
+Ex2: 
+lstm: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 15,
+  n_features: 3,
+  activation: "tanh",
+}
+cnn: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 15,
+  n_features: 3,
+  activation: "tanh",
+}
+
+transformer: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 15,
+  n_features: 3,
+  activation: "tanh",
+}
+
+
+mlp: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 15,
+  n_features: 3,
+  activation: "tanh",
+}
+
+Ex3
+Ex1
+lstm: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 10,
+  n_features: 3,
+  activation: "tanh",
+}
+cnn: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 10,
+  n_features: 3,
+  activation: "tanh",
+}
+
+transformer: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 10,
+  n_features: 3,
+  activation: "tanh",
+}
+
+
+mlp: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 10,
+  n_features: 3,
+  activation: "tanh",
+}
+
+
+Ex2: 
+lstm: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 20,
+  n_features: 3,
+  activation: "tanh",
+}
+cnn: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 20,
+  n_features: 3,
+  activation: "tanh",
+}
+
+transformer: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 20,
+  n_features: 3,
+  activation: "tanh",
+}
+
+
+mlp: {
+  epochs: 100,
+  batch_size: 256,
+  sequence_lenght: 20,
+  n_features: 3,
+  activation: "tanh",
+}
+
+
+
+
+
+run code: python main.py --model_type mlp --epochs 100 --batch_size 256 

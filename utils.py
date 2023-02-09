@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt 
 import seaborn as sns
+import string 
 
 
 def plot_performence(model_history,epochs= 50,  model_name= "LSTM", validation = True):
@@ -10,7 +11,7 @@ def plot_performence(model_history,epochs= 50,  model_name= "LSTM", validation =
         # plot accuracy
         plt.plot(model_history.history['acc']) #variable 1 to plot
         plt.plot(model_history.history['val_acc']) #variable 2 to plot
-        plt.title(f'Model {model_name} accuracy') #title
+        plt.title(f'{model_name.upper()} accuracy') #title
         plt.ylabel('Accuracy') #label y
         plt.xlabel('Epoch') #label x
         plt.legend(['Training', 'Validation'], loc='lower right') #legend
@@ -19,7 +20,7 @@ def plot_performence(model_history,epochs= 50,  model_name= "LSTM", validation =
         # plot losss 
         plt.plot(model_history.history['loss'])
         plt.plot(model_history.history['val_loss'])
-        plt.title(f'Model {model_name} loss') #title
+        plt.title(f'{model_name.upper()} loss') #title
         plt.ylabel('Loss') #label y
         plt.xlabel('Epoch') #label x
         plt.legend(['Training', 'Validation'], loc='upper right') #legend
@@ -28,20 +29,20 @@ def plot_performence(model_history,epochs= 50,  model_name= "LSTM", validation =
     else: 
         #plot accuracy
         plt.plot(model_history.history['acc']) #variable 1 to plot
-        plt.title(f'Model {model_name} accuracy') #title
+        plt.title(f'{model_name.upper()} accuracy') #title
         plt.ylabel('Accuracy') #label y
         plt.xlabel('Epoch') #label x
         plt.legend(['Training'], loc='lower right') #legend
         plt.show()
         #plot loss
         plt.plot(model_history.history['loss']) #variable 1 to plot
-        plt.title(f'Model {model_name} loss') #title
+        plt.title(f'{model_name.upper()} loss') #title
         plt.ylabel('Loss') #label y
         plt.xlabel('Epoch') #label x
         plt.legend(['Training'], loc='upper right') #legend
         plt.show()
         
-def plot(y_pred, y_true, label_names:list,  save_file:str):
+def plot_cf(y_pred, y_true, label_names:list,  save_file:False):
     
     from sklearn.metrics import confusion_matrix
     cf_matrix = confusion_matrix(y_pred=y_pred, y_true=y_true)
