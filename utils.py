@@ -33,6 +33,7 @@ def plot_performence(model_history,epochs= 50,  model_name= "LSTM", validation =
         plt.ylabel('Accuracy') #label y
         plt.xlabel('Epoch') #label x
         plt.legend(['Training'], loc='lower right') #legend
+        plt.savefig(f"{model_name}_acc.png")
         plt.show()
         #plot loss
         plt.plot(model_history.history['loss']) #variable 1 to plot
@@ -40,9 +41,10 @@ def plot_performence(model_history,epochs= 50,  model_name= "LSTM", validation =
         plt.ylabel('Loss') #label y
         plt.xlabel('Epoch') #label x
         plt.legend(['Training'], loc='upper right') #legend
+        plt.savefig(f"{model_name}_loss.png")
         plt.show()
         
-def plot_cf(y_pred, y_true, label_names:list,  save_file:False):
+def plot_cf(y_pred, y_true, label_names:list,  model_type="transfomer"):
     
     from sklearn.metrics import confusion_matrix
     cf_matrix = confusion_matrix(y_pred=y_pred, y_true=y_true)
@@ -57,7 +59,7 @@ def plot_cf(y_pred, y_true, label_names:list,  save_file:False):
     ## Ticket labels - List must be in alphabetical order
     ax.xaxis.set_ticklabels(label_names)
     ax.yaxis.set_ticklabels(label_names)
-
+    plt.savefig(f"{model_type}_cf.png")
     ## Display the visualization of the Confusion Matrix.
     plt.show()
 
