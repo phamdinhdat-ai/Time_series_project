@@ -75,6 +75,9 @@ class MLP(object):
                              verbose=1,
                              callbacks=[early_stopping_monitor,checkpoint])
                              #callbacks=[PlotLossesKeras(), early_stopping_monitor, checkpoint])
+        import pickle
+        with open('mlp_result.pkl', 'wb') as f:
+            pickle.dump(callback_history.history, f)
         return callback_history
 
     def summary(self):

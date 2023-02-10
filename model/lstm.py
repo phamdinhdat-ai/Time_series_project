@@ -75,7 +75,7 @@ class LSTM(object):
                              validation_split=0.2,
                              verbose=1,
                              callbacks=[early_stopping_monitor,checkpoint])
-        with open('results.pkl', 'wb') as f:
+        with open('results_lstm.pkl', 'wb') as f:
             pickle.dump(callback_history.history, f) 
         return callback_history
 
