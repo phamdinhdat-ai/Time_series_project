@@ -93,7 +93,7 @@ def main(opt):
         plot_performence(hist, epochs=epochs, model_name=model_type)
         # test_y_tf = np.argmax(test_y, axis=1)
         # pred_y_tf = np.argmax(y_pred, axis=1)
-        plot_cf(pred_y_tf, test_y_tf, label_names=label_names, save_file=False)
+        plot_cf(pred_y_tf, test_y_tf, label_names=label_names, model_type=model_type)
 
 
 if __name__ == "__main__":
