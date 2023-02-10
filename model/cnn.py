@@ -81,7 +81,7 @@ class CNN(object):
         
                              #callbacks=[PlotLossesKeras(), early_stopping_monitor, checkpoint])
 
-        with open('results.pkl', 'wb') as f:
+        with open('results_cnn.pkl', 'wb') as f:
             pickle.dump(callback_history.history, f)  
         return callback_history
 
