@@ -15,15 +15,17 @@ def plot_performence(model_history,epochs= 50,  model_name= "LSTM", validation =
         plt.ylabel('Accuracy') #label y
         plt.xlabel('Epoch') #label x
         plt.legend(['Training', 'Validation'], loc='lower right') #legend
+        plt.savefig(f"{model_name}_acc.png")
         plt.show()
         # plt.savefig(f"acc_{len(epochs)}.png")
         # plot losss 
-        plt.plot(model_history.history['loss'])
+        plt.plot(model_history.history['loss']) 
         plt.plot(model_history.history['val_loss'])
         plt.title(f'{model_name.upper()} loss') #title
         plt.ylabel('Loss') #label y
         plt.xlabel('Epoch') #label x
         plt.legend(['Training', 'Validation'], loc='upper right') #legend
+        plt.savefig(f"{model_name}_loss.png")
         plt.show()
 
     else: 

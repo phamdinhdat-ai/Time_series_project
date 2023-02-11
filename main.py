@@ -9,44 +9,51 @@ from model.transformer import Transformer
 from model.lstm import LSTM
 from model.cnn import CNN
 from model.mlp import MLP
+from model.config import LSTM_config, Transformer_config
+# from model import config 
 # model = Transformer()
 from preprocess.processing import min_max_scale, generate_data
 from utils import plot_performence, plot_cf
 from sklearn.metrics import classification_report
-file_path  = r"C:\Users\TAOSTORE\Desktop\SPP\data\SPP_final_1.csv"
+file_path  = r"/content/drive/MyDrive/data/SPP_final_1.csv"
 save_file = r"C:\Users\TAOSTORE\Desktop\SPP\result\cnn"
 dataset = pd.read_csv(file_path)
 data = dataset.loc[:,"X":"Z"].values
 labels = dataset.Labels.values.astype(dtype=np.float32)
+def parse_opt(known=False):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_type', type=str, default="transformer", help='name of model training')
+    parser.add_argument('--epochs', type=int, default=100, help='epochs')
+    parser.add_argument('--sequence_lenght', type=int, default=10, help='sequence_lenght for Sequence model')
+    parser.add_argument('--batch_size', type=int, default=128, help='setting batch_size')
+    parser.add_argument('--plot', type=bool, default=True, help='plot performance')
+    return parser.parse_known_args()[0] if known else parser.parse_args()
 
 
 
 
-
-
+opt = parse_opt(True)
+sequence_length = opt.sequence_lenght
+LSTM_config['timestep'] = opt.sequence_lenght
+Transformer_config['timestep'] = opt.sequence_lenght
 label_names = ["Lieleft", "LieRight", "LieUp","LieDown" ,"Unsleep"]
 scaled_data = min_max_scale(data)
-# sequence_data, sequence_labels = generate_data(scaled_data, labels)
+sequence_data, sequence_labels = generate_data(scaled_data, labels, sequence_length= sequence_length)
 
 
 
-samples = scaled_data.reshape(data.shape[0], 1, data.shape[1]).astype(dtype=np.float32)
-labeled = to_categorical(labels)
+# samples = scaled_data.reshape(data.shape[0], 1, data.shape[1]).astype(dtype=np.float32)
+labeled = to_categorical(sequence_labels)
 
-train_X, test_X, train_y, test_y = train_test_split(samples, labeled, test_size= 0.2)
+# train_X, test_X, train_y, test_y = train_test_split(samples, labeled, test_size= 0.2)
+
+train_X, test_X, train_y, test_y = train_test_split(sequence_data, labeled, test_size= 0.2)
 
 
 print("shape of training data: ", train_X.shape)
 print("shape of testing data: ", test_X.shape)
 print("shape of labels data: ", labeled.shape)
 
-def parse_opt(known=False):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model_type', type=str, default="transformer", help='name of model training')
-    parser.add_argument('--epochs', type=int, default=100, help='epochs')
-    parser.add_argument('--batch_size', type=int, default=128, help='setting batch_size')
-    parser.add_argument('--plot', type=bool, default=True, help='plot performance')
-    return parser.parse_known_args()[0] if known else parser.parse_args()
 
 def main(opt):
     epochs = opt.epochs
@@ -97,7 +104,7 @@ def main(opt):
 
 
 if __name__ == "__main__":
-    opt = parse_opt(True)
+    # opt = parse_opt(True)
     main(opt)
 # file_path = r"C:\Users\TAOSTORE\Desktop\SPP\data\SPP_Data/"
 
