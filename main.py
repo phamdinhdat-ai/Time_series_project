@@ -12,10 +12,15 @@ from model.mlp import MLP
 from model.config import LSTM_config, Transformer_config
 # from model import config 
 # model = Transformer()
+from model.cnn_lstm import CNN_LSTM
+
+# model = CNN_LSTM()
+# print(model.summary())
+
 from preprocess.processing import min_max_scale, generate_data
 from utils import plot_performence, plot_cf
 from sklearn.metrics import classification_report
-file_path  = r"/content/drive/MyDrive/data/SPP_final_1.csv"
+file_path  = r"C:\Users\TAOSTORE\Desktop\SPP\data\SPP_final_1.csv"
 save_file = r"C:\Users\TAOSTORE\Desktop\SPP\result\cnn"
 dataset = pd.read_csv(file_path)
 data = dataset.loc[:,"X":"Z"].values
@@ -70,15 +75,23 @@ def main(opt):
         pred_y_tf = np.argmax(y_pred, axis=1)
     if model_type == "lstm":
         model = LSTM()
+        # model = CNN_LSTM()
         model.summary()
         hist = model.train(train_X, train_y, epochs=epochs, batch_size=batch_size)
         result, y_pred  = model.evaluate(test_X, test_y)
         print('The evaluation of the model on the test set is: ', result)
         test_y_tf = np.argmax(test_y, axis=1)
-        print(y_pred)
         pred_y_tf = np.argmax(y_pred, axis=1)
     if model_type == "cnn":
         model = CNN()
+        model.summary()
+        hist = model.train(train_X, train_y, epochs=epochs, batch_size=batch_size)
+        result, y_pred  = model.evaluate(test_X, test_y)
+        print('The evaluation of the model on the test set is: ', result)
+        test_y_tf = np.argmax(test_y, axis=1)
+        pred_y_tf = np.argmax(y_pred, axis=1)
+    if model_type == "cnn_lstm":
+        model = CNN_LSTM()
         model.summary()
         hist = model.train(train_X, train_y, epochs=epochs, batch_size=batch_size)
         result, y_pred  = model.evaluate(test_X, test_y)
@@ -119,3 +132,8 @@ if __name__ == "__main__":
 
 
 
+# from model.multi_task_model import SPPNet
+# from model.cnn_lstm import CNN_LSTM
+
+# model = CNN_LSTM()
+# print(model.summary())
