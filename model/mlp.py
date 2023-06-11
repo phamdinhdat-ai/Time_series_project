@@ -7,40 +7,42 @@ import keras
 from keras import layers
 from keras.models import Model
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
-
+from .config import MLP_config, Complier
 
 
 
 class MLP(object):
     def __init__(self):
     
-        self.timestep = 1, 
-        self.n_features = 3, 
-        self.n_classes  = 5,
-        # self.filters = [128, 64]
-        # self.kernel = 3, 
-        self.mlp_units = [128, 64]
-        self.dropout = 0.4
-        self.log_dir = r"C:\Users\TAOSTORE\Desktop\SPP\checkpoint\log_dir_mlp/"
-        self.save_file = r"C:\Users\TAOSTORE\Desktop\SPP\checkpoint\work_dir_mlp/"
-        self.activation = "tanh"
-        # self.filepath  = ''
+        self.timestep = MLP_config['timestep'] 
+        self.n_features = MLP_config['n_features'] 
+        self.n_classes  = MLP_config['n_classes']
+        self.mlp_units = MLP_config['mlp_units']
+        self.dropout = MLP_config['drop_out']
+        self.log_dir =MLP_config['log_dir']
+        self.save_file = MLP_config["save_file"]
+        self.activation = MLP_config['activation']
+        self.lr  = Complier['lr']
+        self.optimizer  = Complier['optimizer'][0]
+        self.loss_fn = Complier['loss']
     def build(self):
     
-        inputs = keras.Input(shape=(1,3))
+        inputs = keras.Input(shape=(self.timestep, self.n_features))
         x = inputs
         x = layers.Flatten()(x)
         for unit in self.mlp_units:
             x = layers.Dense(unit, activation = 'tanh')(x)
             x = layers.Dropout(self.dropout)(x)
         # x = layers.Flatten()(x)
-        outs = layers.Dense(5, activation = "softmax")(x)
+        outs = layers.Dense(self.n_classes, activation = "softmax")(x)
 
         return Model(inputs, outs)
 
     def train(self,
         X_train,
         y_train,
+        X_val, 
+        y_val,
         epochs=200,
         batch_size=64):
         """ Training the network
@@ -54,8 +56,8 @@ class MLP(object):
         """
 
         self.model = self.build()
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
-                           loss = 'categorical_crossentropy',
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.lr),
+                           loss = self.loss_fn,
                            metrics= ["acc",
                            tf.keras.metrics.Precision(),
                            tf.keras.metrics.Recall(),
@@ -71,7 +73,7 @@ class MLP(object):
         checkpoint = ModelCheckpoint(self.filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 
         callback_history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-                             validation_split=0.2,
+                             validation_data = [X_val, y_val],
                              verbose=1,
                              callbacks=[early_stopping_monitor,checkpoint])
                              #callbacks=[PlotLossesKeras(), early_stopping_monitor, checkpoint])

@@ -15,10 +15,8 @@ from keras import layers
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 from keras.callbacks import Callback
 
-from .config import Transformer_config
+from .config import Transformer_config, Complier
 class Transformer(object):
-    """ Building the Recurrent Neural Network for Multivariate time series forecasting
-    """
 
     def __init__(self):
         """ Initialization of the object
@@ -40,7 +38,9 @@ class Transformer(object):
         self.mlp_dropout=Transformer_config["drop_out"]
         self.dropout=Transformer_config["drop_out"]
         self.activation = Transformer_config["activation"]
-
+        self.lr  = Complier['lr']
+        self.optimizer  = Complier['optimizer'][0]
+        self.loss_fn = Complier['loss']
     def transformer_encoder(self,
         inputs):
 
@@ -77,7 +77,7 @@ class Transformer(object):
 
         # output layer
         outputs = layers.Dense(self.n_classes, activation='softmax')(x)
-
+        
         return keras.Model(inputs, outputs)
 
 
@@ -85,6 +85,8 @@ class Transformer(object):
     def train(self,
         X_train,
         y_train,
+        X_val, 
+        y_val,
         epochs=200,
         batch_size=64):
         """ Training the network
@@ -101,8 +103,8 @@ class Transformer(object):
         """
 
         self.model = self.build()
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
-                           loss = 'categorical_crossentropy',
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.lr),
+                           loss = self.loss_fn,
                            metrics= ["acc",
                            tf.keras.metrics.Precision(),
                            tf.keras.metrics.Recall(),
@@ -118,7 +120,7 @@ class Transformer(object):
         checkpoint = ModelCheckpoint(self.filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 
         callback_history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-                             validation_split=0.2,
+                             validation_data = [X_val, y_val],
                              verbose=1,
                              callbacks=[early_stopping_monitor,checkpoint])
            

@@ -3,7 +3,7 @@ import os
 import pandas as pd 
 import glob
 import numpy as np
-
+from keras.utils import plot_model
 from datetime import datetime
 from time import time
 import json
@@ -15,8 +15,9 @@ from keras import layers
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 from keras.callbacks import Callback
 from keras.layers import Bidirectional 
-from model.config import Transformer_config
+from model.config import Transformer_config, LSTM_config
 from keras.layers import Layer
+from keras import Model
 import keras.backend as K
 class Attention(Layer):
     def __init__(self,**kwargs):
@@ -41,7 +42,7 @@ class Attention(Layer):
         # Compute the context vector
         context = x * alpha
         context = K.sum(context, axis=1)
-        return context
+        return context.reshape(context.shape[0],1)
 
 
 
@@ -64,6 +65,18 @@ class SPPNet(object):
         self.mlp_units = Transformer_config["mlp_units"]
         self.mlp_dropout=Transformer_config["drop_out"]
         self.dropout=Transformer_config["drop_out"]
+        self.time_step = LSTM_config['timestep']
+        self.n_features = LSTM_config['n_features']
+        self.n_classes = LSTM_config['n_classes']
+        self.hidden_size = LSTM_config['hidden_size']
+        self.mlp_units = LSTM_config['mlp_units']
+        self.dropout = LSTM_config['drop_out']
+        self.log_dir = LSTM_config['log_dir']
+        self.save_file = LSTM_config['save_file']
+        self.activation = LSTM_config["activation"]
+        self.width = 200
+        self.height = 200 
+        self.channel = 1
 
     def transformer_encoder(self,
     inputs):
@@ -86,16 +99,48 @@ class SPPNet(object):
 
     def attention_lstm(self, inputs):
         
-        x = layers.LSTM(units = 256, activation = 'tanh',return_sequences=True , name = "Layers_LSTM_1" )(inputs)
-        x = layers.Dropout(self.dropout)(x)
-        x = layers.LSTM(units = 128, activation = 'tanh', return_sequences = False, name = "Layers_LSTM_2")(x)
-        x = layers.Dropout(self.dropout)(x)
+        # x = layers.LSTM(units = 256, activation = 'tanh',return_sequences=True , name = "Layers_LSTM_1" )(inputs)
+        # x = layers.Dropout(self.dropout)(x)
+        # x = layers.LSTM(units = 128, activation = 'tanh', return_sequences = True, name = "Layers_LSTM_2")(x)
+        # x = layers.Dropout(self.dropout)(x)
+        # input = keras.Input(shape=(self.time_step, self.n_features))
 
-        x = layers.Bidirectional(layers.LSTM(units = 64, activation = 'tanh',return_sequences=True , name = "Layers_BiLSTM_1"))(x)
-        x = layers.Bidirectional(layers.LSTM(units = 64, activation = 'tanh',return_sequences=True , name = "Layers_BiLSTM_2"))(x)
+        x = inputs
+        for hidden in self.hidden_size:
+            x = layers.LSTM(units = hidden, activation = self.activation,return_sequences=True  )(x) 
+            x = layers.Dropout(self.dropout)(x)
+
+        # x = layers.Flatten()(x)
+        # x = layers.Bidirectional(layers.LSTM(units = 64, activation = 'tanh',return_sequences=True , name = "Layers_BiLSTM_1"))(x)
+        # x = layers.Bidirectional(layers.LSTM(units = 64, activation = 'tanh',return_sequences=True , name = "Layers_BiLSTM_2"))(x)
         x = layers.Flatten()(x)
         x = Attention()(x)
+        # x = layers.Flatten()(x)
+        # x = Attention()(x)
         x = layers.Dense(32)(x)
-    def build_multi_task(self):
+        return x
+    def cnn_block(self, inputs):
+
+        x = inputs 
+        x = layers.Conv2D(32, (3, 3),activation = 'relu', )(x)
+        x = layers.Conv2D(64, (3, 3),activation = 'relu', )(x)
+        x = layers.Conv2D(64, (3, 3),activation = 'relu', )(x)
+        x = layers.Conv2D(32, (3, 3),activation = 'relu', )(x)
+        x = layers.Flatten()(x)
+        x = layers.Dense(32)(x)
+        return x 
+    def build(self):
+        input_signal = keras.Input(shape=(self.timestep, self.n_features))
+        input_cnn = keras.Input(shape=(self.width, self.height, self.channel))
         
-        return 0
+        out_att_lstm = self.attention_lstm(inputs=input_signal)
+        out_cnn = self.cnn_block(inputs=input_cnn)
+        concate = layers.Concatenate()([out_att_lstm, out_cnn])
+        x = layers.Dropout(0.4)(concate)
+        outputs = layers.Dense(5, activation='softmax')(x)
+        return keras.Model([input_signal, input_cnn], outputs)
+    def summary(self):
+        self.model = self.build()
+        plot_model(self.model)
+        print(self.model.summary())
+        

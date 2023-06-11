@@ -9,7 +9,7 @@ from keras import layers
 from keras.models import Model
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 
-from .config import LSTM_config
+from .config import LSTM_config, Complier
 import pickle
 class LSTM(object):
 
@@ -26,6 +26,9 @@ class LSTM(object):
         self.log_dir = LSTM_config['log_dir']
         self.save_file = LSTM_config['save_file']
         self.activation = LSTM_config["activation"]
+        self.lr  = Complier['lr']
+        self.optimizer  = Complier['optimizer'][0]
+        self.loss_fn = Complier['loss']
     def build(self):
         input = keras.Input(shape=(self.time_step, self.n_features))
 
@@ -54,12 +57,14 @@ class LSTM(object):
     def train(self,
         X_train,
         y_train, 
+        X_val, 
+        y_val,
         epochs= 100,
         batch_size= 256):
 
         self.model = self.build()
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
-                           loss = 'categorical_crossentropy',
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.lr),
+                           loss = self.loss_fn,
                            metrics= ["acc",
                            tf.keras.metrics.Precision(),
                            tf.keras.metrics.Recall(),
@@ -72,7 +77,7 @@ class LSTM(object):
         checkpoint = ModelCheckpoint(self.filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 
         callback_history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-                             validation_split=0.2,
+                             validation_data =[X_val, y_val],
                              verbose=1,
                              callbacks=[early_stopping_monitor,checkpoint])
         with open('results_lstm.pkl', 'wb') as f:

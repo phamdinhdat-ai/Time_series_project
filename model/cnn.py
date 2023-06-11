@@ -8,26 +8,28 @@ from keras import layers
 from keras.models import Model
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 import pickle
-
+from .config import CNN_config, Complier
 
 
 class CNN(object):
     def __init__(self):
     
-        self.timestep = 1, 
-        self.n_features = 3, 
-        self.n_classes  = 5,
-        self.filters = [128, 64]
-        self.kernel = 3, 
-        self.mlp_units = [128, 64]
-        self.dropout = 0.4
-        self.log_dir = r"C:\Users\TAOSTORE\Desktop\SPP\checkpoint\log_dir/"
-        self.save_file = r"C:\Users\TAOSTORE\Desktop\SPP\checkpoint\work_dir/"
-        self.activation = "tanh"
-
+        self.timestep = CNN_config['timestep']
+        self.n_features = CNN_config['n_features']
+        self.n_classes  = CNN_config['n_classes']
+        self.filters = CNN_config['filters']
+        self.kernel = CNN_config['kernel_size']
+        self.mlp_units = CNN_config['mlp_units']
+        self.dropout = CNN_config['drop_out']
+        self.log_dir = CNN_config['log_dir']
+        self.save_file = CNN_config['save_file']
+        self.activation =   CNN_config['activation']
+        self.lr  = Complier['lr']
+        self.optimizer  = Complier['optimizer'][0]
+        self.loss_fn = Complier['loss']
     def build(self):
         
-        inputs = keras.Input(shape=(1,3))
+        inputs = keras.Input(shape=(self.timestep,self.n_features))
         x = inputs
         for filter in self.filters:
             x =layers.Conv1D(filters=filter, kernel_size=1, activation='relu')(x)
@@ -37,7 +39,7 @@ class CNN(object):
             x = layers.Dense(unit, activation = 'tanh')(x)
             x = layers.Dropout(self.dropout)(x)
 
-        outs = layers.Dense(5, activation = "softmax")(x)
+        outs = layers.Dense(self.n_classes, activation = "softmax")(x)
 
         return Model(inputs, outs)
     
@@ -45,6 +47,8 @@ class CNN(object):
     def train(self,
         X_train,
         y_train,
+        X_val, 
+        y_val,
         epochs=200,
         batch_size=64):
         """ Training the network
@@ -58,8 +62,8 @@ class CNN(object):
         """
 
         self.model = self.build()
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
-                           loss = 'categorical_crossentropy',
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.lr),
+                           loss = self.loss_fn, 
                            metrics= ["acc",
                            tf.keras.metrics.Precision(),
                            tf.keras.metrics.Recall(),
@@ -75,7 +79,7 @@ class CNN(object):
         checkpoint = ModelCheckpoint(self.filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 
         callback_history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-                             validation_split=0.2,
+                             validation_data = [X_val, y_val],
                              verbose=1,
                              callbacks=[early_stopping_monitor,checkpoint])
         
