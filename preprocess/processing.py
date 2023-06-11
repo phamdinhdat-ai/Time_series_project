@@ -8,6 +8,8 @@ def load_data(file_path):
     df = pd.read_csv(file_path)
     return df 
 
+
+
 def load_regr_data(file_path): 
     data = []
     labels = []
@@ -32,6 +34,8 @@ def load_regr_data(file_path):
             pass
     return np.array(data), np.array(labels)
 
+
+
 def generate_data(X, y, sequence_length = 10, step = 1):
     X_local = []
     y_local = []
@@ -47,10 +51,15 @@ def min_max_scale(dataset):
     scaled_data = scaler.transform(dataset)
     return scaled_data
 
+
+
 # add filter update 
 
 def filter_norm(data):
     # data: shape(n_samples, [X, Y, Z])
-    data_filtered = (1/data.shape[1])*np.sprt(np.sum(np.pow(data), axis=0))
+    data_filtered = (1/data.shape[1])*np.sqrt(np.sum(data**2, axis=1))
     return data_filtered
+
+
+
 
