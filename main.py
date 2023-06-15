@@ -18,7 +18,7 @@ from model.cnn_lstm import CNN_LSTM
 # print(model.summary())
 
 from preprocess.processing import min_max_scale, generate_data
-from utils import plot_performence, plot_cf
+from Time_series_project.utils import plot_performence, plot_cf
 from sklearn.metrics import classification_report
 static_path = '.\data\static'
 dynamic_path = '.\data\dynamic'
@@ -139,7 +139,7 @@ def main(opt):
         result, y_pred  = model.evaluate(test_X, test_y)
         print('The evaluation of the model on the test set is: ', result)
         test_y_tf = np.argmax(test_y, axis=1)
-        # pred_y_tf = np.argmax(y_pred, axis=1)
+        pred_y_tf = np.argmax(y_pred, axis=1)
     if model_type == "cnn":
         model = CNN()
         model.summary()
