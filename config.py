@@ -1,16 +1,16 @@
 LSTM_config = dict(
     timestep = 1, 
     n_features = 3,
-    hidden_size = [256, 128],
-    mlp_units = [64],
+    hidden_size = [128,  64],
+    mlp_units = [32],
     drop_out = 0.4,
     n_classes = 5,
     # learning_rate = 1e-4, 
-    log_dir = "/checkpoint/LSTM/",
-    save_file = "/content/drive/MyDrive/Checkpoint/",
+    log_dir = "checkpoint/lstm/",
+    save_file = "checkpoint/lstm_model/",
     activation = 'tanh'
 )
-sequence_lenght = 20,
+
 Transformer_config = dict(
     timestep = 1, 
     n_features = 3,
@@ -21,25 +21,38 @@ Transformer_config = dict(
     mlp_units = [128, 64],
     drop_out = 0.4,
     n_classes = 5,
-    log_dir = "./checkpoint/Transformer/",
-    save_file = r"/content/drive/MyDrive/Checkpoint",
+    log_dir = "checkpoint/transformer/",
+    save_file = "checkpoint/transformer_model/",
     activation = 'tanh'
     )
 
 
 CNN_config = dict(
-    timestep = 10, 
+    timestep = 1, 
     n_features = 3,
     filters = [128, 64],
     mlp_units = [128, 64],
+    kernel_size = 3,
     drop_out = 0.4,
     n_classes = 5,
-    log_dir = "/checkpoint/cnn/",
-    save_file = "/checkpoint/work_dir_cnn/",
+    log_dir = "checkpoint/cnn/",
+    save_file = "checkpoint/cnn_model/",
     activation = 'tanh'
 )
-Compling = dict(
-    lr = [1e-3],
+MLP_config = dict(
+    timestep = 1, 
+    n_features = 3,
+    filters = [128, 64],
+    mlp_units = [128, 64],
+    kernel_size = 3,
+    drop_out = 0.4,
+    n_classes = 5,
+    log_dir = "checkpoint/mlp/",
+    save_file = "checkpoint/mlp_model/",
+    activation = 'tanh'
+)
+Complier= dict(
+    lr = 1e-3,
     optimizer = ['adam', 'SGD'],
     loss = ['categorical_crossentropy']
 )
