@@ -6,8 +6,8 @@ LSTM_config = dict(
     drop_out = 0.4,
     n_classes = 5,
     # learning_rate = 1e-4, 
-    log_dir = "/checkpoint/lstm/",
-    save_file = "/checkpoint/lstm_model/",
+    log_dir = "checkpoint/lstm/",
+    save_file = "checkpoint/lstm_model/",
     activation = 'tanh'
 )
 
@@ -21,8 +21,8 @@ Transformer_config = dict(
     mlp_units = [128, 64],
     drop_out = 0.4,
     n_classes = 5,
-    log_dir = "./checkpoint/transformer/",
-    save_file = "/checkpoint/transformer_model/",
+    log_dir = "checkpoint/transformer/",
+    save_file = "checkpoint/transformer_model/",
     activation = 'tanh'
     )
 
