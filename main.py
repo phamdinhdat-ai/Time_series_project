@@ -18,15 +18,16 @@ from model.cnn_lstm import CNN_LSTM
 # print(model.summary())
 
 from preprocess.processing import min_max_scale, generate_data
-from Time_series_project.utils import plot_performence, plot_cf
+from utils import plot_performence, plot_cf
 from sklearn.metrics import classification_report
-static_path = '.\data\static'
-dynamic_path = '.\data\dynamic'
-label_names = ["Lieleft", "LieRight", "LieUp","LieDown" ,"Unsleep"]
+static_path = 'data\static'
+dynamic_path = 'data\dynamic'
+label_dynamic_names = ["Prone", "Lateral Left", "Lateral Right", "Supine"]
 def load_data(data_type):
     # load data 
     if data_type == 'static':# data with person have no actitity when sleep 
         list_files = os.listdir(static_path)
+        print(list_files)
         train_dataset = np.load(f"{static_path}\{list_files[1]}")
         val_dataset = np.load(f"{static_path}\{list_files[2]}")
         test_dataset = np.load(f"{static_path}\{list_files[0]}")
@@ -42,7 +43,7 @@ def load_data(data_type):
 def parse_opt(known=False):
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_type', type=str, default="transformer", help='name of model training')
-    parser.add_argument('--data_type', type=str, default="static", help='name of dataset training')
+    parser.add_argument('--data_type', type=str, default="dynamic", help='name of dataset training')
     parser.add_argument('--num_classes', type=int, default=5, help='numbers of classes in the dataset')
     parser.add_argument('--epochs', type=int, default=100, help='epochs')
     parser.add_argument('--sequence_lenght', type=int, default=None, help='sequence_lenght for Sequence model')
