@@ -52,15 +52,15 @@ def plot_cf(y_pred, y_true, label_names:list,  model_type="transfomer"):
     cf_matrix = confusion_matrix(y_pred=y_pred, y_true=y_true)
     import seaborn as sns
 
-    ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
+    ax = sns.heatmap(cf_matrix, annot=True,fmt='.2%', cmap='Blues')
 
     ax.set_title('Confusion Matrix\n\n');
     ax.set_xlabel('\nPredicted Values')
     ax.set_ylabel('Actual Values ');
 
     ## Ticket labels - List must be in alphabetical order
-    ax.xaxis.set_ticklabels(label_names)
-    ax.yaxis.set_ticklabels(label_names)
+    ax.xaxis.set_ticklabels(label_names, rotation = 60)
+    ax.yaxis.set_ticklabels(label_names, rotation = 90)
     plt.savefig(f"{model_type}_cf.png")
     ## Display the visualization of the Confusion Matrix.
     plt.show()
