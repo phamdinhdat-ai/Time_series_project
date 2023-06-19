@@ -20,25 +20,24 @@ from model.cnn_lstm import CNN_LSTM
 from preprocess.processing import min_max_scale, generate_data
 from utils import plot_performence, plot_cf
 from sklearn.metrics import classification_report
-static_path = 'data\static'
-dynamic_path = 'data\dynamic'
+static_path = 'data/static'
+dynamic_path = 'data/dynamic'
 label_names = ["Prone", "Lateral Left", "Lateral Right", "Supine"]
 def load_data(data_type):
     # load data 
     if data_type == 'static':# data with person have no actitity when sleep 
-        list_files = os.listdir(static_path)
-        print(list_files)
-        train_dataset = np.load(f"{static_path}\{list_files[1]}")
-        val_dataset = np.load(f"{static_path}\{list_files[2]}")
-        test_dataset = np.load(f"{static_path}\{list_files[0]}")
-        return train_dataset, val_dataset, test_dataset
+        label_names = ['Down', 'DownLEFT', 'DownRIGHT', 'Left', 'LeftDOWN', 'LeftUP', 'Right', 'RightDOWN', 'RightUP', 'Sit', 'Up', 'UpLEFT', 'UpRIGHT']
+        train_dataset = np.load(f"{static_path}/static_train_set.npy")
+        val_dataset = np.load(f"{static_path}/static_val_set.npy")
+        test_dataset = np.load(f"{static_path}/static_test_set.npy")
+        return train_dataset, val_dataset, test_dataset, label_names
     
     if data_type == 'dynamic':# data with person do some action gesture
-        list_files = os.listdir(dynamic_path)
-        train_dataset = np.load(f"{dynamic_path}\{list_files[1]}")
-        val_dataset = np.load(f"{dynamic_path}\{list_files[2]}")
-        test_dataset = np.load(f"{dynamic_path}\{list_files[0]}")
-        return train_dataset, val_dataset, test_dataset
+        label_names = ["Prone", "Lateral Left", "Lateral Right", "Supine"]
+        train_dataset = np.load(f"{dynamic_path}/dynamic_train_set.npy")
+        val_dataset = np.load(f"{dynamic_path}/dynamic_val_set.npy")
+        test_dataset = np.load(f"{dynamic_path}/dynamic_test_set.npy")
+        return train_dataset, val_dataset, test_dataset, label_names
     
 def parse_opt(known=False):
     parser = argparse.ArgumentParser()
@@ -69,7 +68,7 @@ Transformer_config['n_classes'] =  opt.num_classes
 
 
 # split data into three sets
-train_dataset, val_dataset, test_dataset = load_data(data_type)
+train_dataset, val_dataset, test_dataset, label_names = load_data(data_type)
 print(val_dataset.shape)
 train_data = train_dataset[:,1:4]
 train_label = train_dataset[:,4]
