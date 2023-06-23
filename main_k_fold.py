@@ -213,8 +213,8 @@ def main_k_fold(opt):
         with open(f'k_fold_results_{model_type}.pkl', 'wb') as f:
             pickle.dump(k_fold_hist, f)    
         k_fold_arr = np.array(k_fold_results)
-        print("average results on static dataset: ", np.mean(k_fold_arr, axis=0))
-
+        print("Average results on static dataset: ", np.mean(k_fold_arr, axis=0))
+        print("Standard Deviation result on static dataset: ", np.std(k_fold_arr, axis=0))
     if plot == True:
         plot_performence(hist, epochs=epochs, model_name=model_type)
     #     # test_y_tf = np.argmax(test_y, axis=1)
