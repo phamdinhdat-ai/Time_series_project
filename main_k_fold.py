@@ -148,7 +148,9 @@ def main_k_fold(opt):
                 test_X, sequence_labels_test = generate_data(test_scaled, test_label, sequence_length= sequence_length, step= steps)
                 train_y = to_categorical(sequence_labels_train)
                 test_y = to_categorical(sequence_labels_test)
-            # samples = scaled_data.reshape(data.shape[0], 1, data.shape[1]).astype(dtype=np.float32)
+                # samples = scaled_data.reshape(data.shape[0], 1, data.shape[1]).astype(dtype=np.float32)
+                # split train data into 2 sets: training set/testing set (80/20)
+                X_train, X_val, y_train, y_val = train_test_split(train_X, train_y, test_size=0.2)
 
             # train_X, test_X, train_y, test_y = train_test_split(samples, labeled, test_size= 0.2)
             else:
@@ -162,12 +164,14 @@ def main_k_fold(opt):
                 train_X = train_scaled.reshape(train_scaled.shape[0], 1, train_scaled.shape[1]).astype(dtype=np.float32)
                 test_X = test_scaled.reshape(test_scaled.shape[0], 1, test_scaled.shape[1]).astype(dtype=np.float32)
 
-            print("shape of training data: ", train_X.shape)
+            print("shape of training data: ", X_train.shape)
+            print("shape of training label: ", y_train.shape)
+            print("shape of validation data: ", X_val.shape)
+            print("shape of validation label: ", y_val.shape)
             print("shape of testing data: ", test_X.shape)
-            print("shape of training label: ", train_y.shape)
             print("shape of test label: ", test_y.shape)
 
-            hist = model.train(train_X, train_y,test_X, test_y, epochs=epochs, batch_size=batch_size)
+            hist = model.train(X_train, y_train,X_val, y_val, epochs=epochs, batch_size=batch_size)
             result, y_pred  = model.evaluate(test_X, test_y)
             print('The evaluation of the model on the test set is: ', result)
             test_y_tf = np.argmax(test_y, axis=1)
