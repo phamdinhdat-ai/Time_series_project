@@ -11,37 +11,15 @@ from model.cnn import CNN
 from model.mlp import MLP
 from model.config import LSTM_config, Transformer_config, CNN_config, MLP_config
 
-# from model import config 
-# model = Transformer()
-
 from model.cnn_lstm import CNN_LSTM
-
-# model = CNN_LSTM()
-# print(model.summary())
 
 from preprocess.processing import min_max_scale, generate_data
 from utils import plot_performence, plot_cf
 from sklearn.metrics import classification_report
-k_fold_static_path = 'data/5_fold_static'
-k_fold_dynamic_path = 'data/5_fold_dynamic'
-# label_names = ['Down', 'DownLEFT', 'DownRIGHT', 'Left', 'LeftDOWN', 'LeftUP', 'Right', 'RightDOWN', 'RightUP', 'Sit', 'Up', 'UpLEFT', 'UpRIGHT']
 
-# def load_data(data_type):
-#     # load data 
-#     if data_type == 'static':# data with person have no actitity when sleep 
-#         label_names = ['Down', 'DownLEFT', 'DownRIGHT', 'Left', 'LeftDOWN', 'LeftUP', 'Right', 'RightDOWN', 'RightUP', 'Sit', 'Up', 'UpLEFT', 'UpRIGHT']
-#         train_dataset = np.load(f"{static_path}/static_train_set.npy")
-#         val_dataset = np.load(f"{static_path}/static_val_set.npy")
-#         test_dataset = np.load(f"{static_path}/static_test_set.npy")
-#         return train_dataset, val_dataset, test_dataset, label_names
-    
-#     if data_type == 'dynamic':# data with person do some action gesture
-#         label_names = ["Prone", "Lateral Left", "Lateral Right", "Supine"]
-#         train_dataset = np.load(f"{dynamic_path}/dynamic_train_set.npy")
-#         val_dataset = np.load(f"{dynamic_path}/dynamic_val_set.npy")
-#         test_dataset = np.load(f"{dynamic_path}/dynamic_test_set.npy")
-#         return train_dataset, val_dataset, test_dataset, label_names
-
+k_fold_static_path = 'data/5_fold_static_2'
+k_fold_dynamic_path = 'data/5_fold_dynamic_2'
+import json
 
 def parse_opt(known=False):
     parser = argparse.ArgumentParser()
@@ -117,26 +95,36 @@ def main_k_fold(opt):
         model.summary()
     else:
         print("enter correct name of model: transformer/lstm/cnn or mlp")
-
+    experiment = dict()
     if opt.data_type is not None:
         count = 1
         k_fold_results = []
         k_fold_hist = []
         for folder in os.listdir(data_path):
             print(f"Trainin {model_type} on {count}-fold {type_data} dataset: \n ")
-            testset= np.load(f'{data_path}/{folder}/{type_data}_train_set.npy')
-            trainset = np.load(f'{data_path}/{folder}/{type_data}_test_set.npy')
+            train_file = os.listdir(f"{data_path}/{folder}/train")[0]
+            test_files = os.listdir(f"{data_path}/{folder}/test")
+            _, ps_train = train_file.split('_')
+            print("Training model on : ", ps_train[:-4])
+            trainset = np.load(f'{data_path}/{folder}/train/{train_file}')
             train_data = trainset[:,1:4]
             train_label = trainset[:,4]
-            test_data = testset[:,1:4]
-            test_label = testset[:,4]
-            
             # normalize data across min max scale
             train_scaled = min_max_scale(train_data)
-            test_scaled = min_max_scale(test_data)
+            #load testset 
+            test_list = []
+            test_persons = []
+            for file in test_files:
+                _, name = file.split('_')
+                data = np.load(f"{data_path}/{folder}/test/{file}")
+                samples = data[:, 1:4]
+                labels = data[:, 4]
+                scaled_sample = min_max_scale(samples)
+                test_list.append([scaled_sample,labels])
+                test_persons.append(name)
+            # normalize data across min max scale
+            train_scaled = min_max_scale(train_data)
             # Category labels 
-            train_y = to_categorical(train_label)
-            test_y = to_categorical(test_label)
 
             if opt.sequence_lenght is not None:
                 MLP_config['timestep'] = opt.sequence_lenght
@@ -145,12 +133,14 @@ def main_k_fold(opt):
                 CNN_config["timestep"] = opt.sequence_lenght
 
                 train_X, sequence_labels_train = generate_data(train_scaled, train_label, sequence_length= sequence_length, step= steps)
-                test_X, sequence_labels_test = generate_data(test_scaled, test_label, sequence_length= sequence_length, step= steps)
                 train_y = to_categorical(sequence_labels_train)
-                test_y = to_categorical(sequence_labels_test)
-                # samples = scaled_data.reshape(data.shape[0], 1, data.shape[1]).astype(dtype=np.float32)
                 # split train data into 2 sets: training set/testing set (80/20)
                 X_train, X_val, y_train, y_val = train_test_split(train_X, train_y, test_size=0.2)
+                test_data = []
+                for scaled_sample, labels in test_list:
+                    X_test, sq_y = generate_data(scaled_sample, labels, sequence_length= sequence_length, step= steps)
+                    y_test = to_categorical(sq_y)
+                    test_data.append([X_test, y_test])
 
             # train_X, test_X, train_y, test_y = train_test_split(samples, labeled, test_size= 0.2)
             else:
@@ -159,26 +149,45 @@ def main_k_fold(opt):
                 Transformer_config['timestep'] = 1
                 CNN_config["timestep"] = 1
                 train_y = to_categorical(train_label)
-                test_y = to_categorical(test_label)
-
                 train_X = train_scaled.reshape(train_scaled.shape[0], 1, train_scaled.shape[1]).astype(dtype=np.float32)
-                test_X = test_scaled.reshape(test_scaled.shape[0], 1, test_scaled.shape[1]).astype(dtype=np.float32)
-
+                test_data = []
+                for scaled_sample, labels in test_list:
+                    y_test = to_categorical(labels)
+                    X_test = scaled_sample.reshape(scaled_sample.shape[0], 1, scaled_sample.shape[1]).astype(dtype=np.float32)
+                    test_data.append(X_test, y_test)
             print("shape of training data: ", X_train.shape)
             print("shape of training label: ", y_train.shape)
             print("shape of validation data: ", X_val.shape)
             print("shape of validation label: ", y_val.shape)
-            print("shape of testing data: ", test_X.shape)
-            print("shape of test label: ", test_y.shape)
+            # print("shape of testing data: ", test_X.shape)
+            # print("shape of test label: ", test_y.shape)
 
             hist = model.train(X_train, y_train,X_val, y_val, epochs=epochs, batch_size=batch_size)
-            result, y_pred  = model.evaluate(test_X, test_y)
-            print('The evaluation of the model on the test set is: ', result)
-            test_y_tf = np.argmax(test_y, axis=1)
-            pred_y_tf = np.argmax(y_pred, axis=1)
+            
+            experiment[f"train_{count}"] = ps_train
+
+            #evaluation on test data 
+            results = dict()
+            cnt = 0
+            for (X_test, y_test), name in zip(test_data, test_persons):
+                print(f"The evaluation of the model on {name}'s data: ") 
+                result, y_pred  = model.evaluate(X_test, y_test)
+                print('The evaluation of the model: ', result)
+                results[f"Person_{cnt}"] = name
+                results[f"Evaluation_{cnt}"] = result 
+                test_y_tf = np.argmax(y_test, axis=1)
+                pred_y_tf = np.argmax(y_pred, axis=1)
+                cnt +=1 
+            print(results)
+            experiment[f"test_result_{count}"] = results
+
             k_fold_results.append(result)
             k_fold_hist.append(hist.history)
-            count +=1 
+            count +=1
+
+        print(experiment)
+        with open(f"k_fold_perform_{model_type}.pkl",'wb') as outfile:
+            pickle.dump(experiment, outfile)
         with open(f'k_fold_results_{model_type}.pkl', 'wb') as f:
             pickle.dump(k_fold_hist, f)    
         k_fold_arr = np.array(k_fold_results)
