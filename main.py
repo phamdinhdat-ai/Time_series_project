@@ -4,13 +4,13 @@ import tensorflow as tf
 from model.lstm import LSTM
 from config.lstm import Config
 from utils.trainer import train_model
-from utils.load_data import load_and_process_data, tensorflow_dataset
+from utils.load_data import load_and_process_data, tensorflow_dataset, load_from_folder
 from utils.trainer import test_model
 from utils.parse import parse_opt
 from utils.plot import plot_performance
 #load data
 train_path = 'data/dynamic1/train/train_PhamQuangTu.npy'
-test_path = 'data/dynamic1/test'
+test_path = 'data/dynamic2/test'
 
 opt = parse_opt(True)
 
@@ -53,10 +53,9 @@ else:
 
 
 #load data
-_, file_name = train_path.split("_")
-ps_name = file_name[:-4]
-print("<=====> Training on {}'s datat<=====>".format(ps_name))
-X_train, X_val, y_train, y_val = load_and_process_data(file_path=train_path,sequence_lenght=config.timestep, overlap=opt.overlap, valid_ratio=0.2)
+train_folder = 'data/dynamic2/train'
+print("<=====> Training progress <=====>")
+X_train, X_val, y_train, y_val = load_from_folder(folder_path=train_folder, sequence_length=config.timestep, overlap=opt.overlap, valid_ratio=0.2)
 print("shape of training data: ", X_train.shape)
 print("shape of validation data: ", X_val.shape)
 ds_train = tensorflow_dataset(data=X_train, labels=y_train, batch_size=BATCH_SIZE)
@@ -100,7 +99,7 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
 # training progress
 history, model = train_model(model=model, dataset=ds_train, loss_fn=loss_fn, optimizer=optimizer,epochs=EPOCHS, val_dataset=ds_val)
-history["person"] = ps_name
+
 history["test"]  = dict()
 #test progress
 
@@ -118,7 +117,7 @@ for file in os.listdir(test_path):
         history["test"][name[:-4]][metric] = result
 
 print(history)
-with open("{}_{}_{}_{}_{}_{}_{}.pkl".format(ps_name[:-4],model_type,data_type,EPOCHS, BATCH_SIZE, opt.sequence_length, opt.overlap), 'wb') as  f:
+with open("{}_{}_{}_{}_{}_{}.pkl".format(model_type,data_type,EPOCHS, BATCH_SIZE, opt.sequence_length, opt.overlap), 'wb') as  f:
     pickle.dump(history, f)
 plot_performance(history=history, model_type=model_type)
 
