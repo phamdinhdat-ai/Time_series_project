@@ -7,18 +7,45 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.utils import to_categorical
 import tensorflow as tf 
 
-def load_and_process_data(file_path, sequence_lenght= 20, overlap = 0.3,  valid_ratio = None):
+
+
+def load_from_folder(folder_path, sequence_length=20, overlap= 0.4, valid_ratio = 0.2):
+    list_file = os.listdir(folder_path)
+    train_X = np.array([])
+    val_X = np.array([])
+    train_y = np.array([])
+    val_y = np.array([])
+    for file in list_file:
+        _, file_name = file.split("_")
+        ps_name = file_name[:-4]
+        print("<=====> Data is collected by {}<=====>".format(ps_name))
+        X_train, X_val, y_train, y_val = load_and_process_data(f"{folder_path}/{file}", sequence_length=sequence_length, overlap=overlap, valid_ratio=valid_ratio)
+        if train_X.shape[0] == 0:
+            train_X = X_train
+            val_X = X_val
+            train_y = y_train
+            val_y = y_val
+        else: 
+            train_X = np.concatenate([train_X, X_train], axis=0)
+            val_X = np.concatenate([val_X, X_val], axis=0)
+            train_y = np.concatenate([train_y, y_train], axis=0)
+            val_y = np.concatenate([val_y, y_val], axis=0)
+
+    return train_X, val_X, train_y, val_y
+
+
+def load_and_process_data(file_path, sequence_length= 20, overlap = 0.3,  valid_ratio = None):
     dataset  = np.load(file=file_path)
     data = dataset[:,1:4]
     labels = dataset[:,4]
-    steps = int(sequence_lenght - overlap * sequence_lenght)
+    steps = int(sequence_length - overlap * sequence_length)
     # normalize data across min max scale
     data_scaled = min_max_scale(data)
-    X, sequence_labels = generate_data(data_scaled, labels, sequence_lenght= sequence_lenght, step=steps)
+    X, sequence_labels = generate_data(data_scaled, labels, sequence_lenght= sequence_length, step=steps)
     y = to_categorical(sequence_labels)
 
     if valid_ratio is not None:
-        X_train, X_val, y_train, y_val = train_test_split(X,y, test_size=valid_ratio)
+        X_train, X_val, y_train, y_val = train_test_split(X,y, test_size=valid_ratio, shuffle=True)
         return X_train, X_val, y_train, y_val 
     return X, y
 
