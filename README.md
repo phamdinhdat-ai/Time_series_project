@@ -32,7 +32,7 @@
 **Run Code** 
 - `Training data with two option datasets: static and dynamic`
 - For dynamic dataset: `python .\main.py --model_type mlp  --data_type dynamic --num_classes 4 --epochs 100 --batch_size 256  --sequence_lenght 10 --overlap 0.1`
-- For static dataset: `python .\main.py --model_type mlp  --data_type static --num_classes 4 --epochs 100 --batch_size 256  --sequence_lenght 10 --overlap 0.1`
+- For static dataset: `python .\main.py --model_type mlp  --data_type static --num_classes 13 --epochs 100 --batch_size 256  --sequence_lenght 10 --overlap 0.1`
 
 - For k-fold dynamic dataset: `!python main_k_fold.py --model_type mlp --data_type k_fold_dynamic --num_classes 4 --epochs 100 --batch_size 512 --sequence_lenght 10 --overlap 0.9`
 - For k-fold static dataset: `!python main_k_fold.py --model_type mlp --data_type k_fold_static --num_classes 13 --epochs 100 --batch_size 512 --sequence_lenght 10 --overlap 0.9`
