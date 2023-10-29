@@ -4,7 +4,7 @@ import pandas as pd
 from glob import glob 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from keras.utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 import tensorflow as tf 
 
 
@@ -16,7 +16,7 @@ def load_from_folder(folder_path, sequence_length=20, overlap= 0.4, valid_ratio 
     train_y = np.array([])
     val_y = np.array([])
     for file in list_file:
-        _, file_name = file.split("_")
+        file_name = file.split("_")[-1]
         ps_name = file_name[:-4]
         print("<=====> Data is collected by {}<=====>".format(ps_name))
         X_train, X_val, y_train, y_val = load_and_process_data(f"{folder_path}/{file}", sequence_length=sequence_length, overlap=overlap, valid_ratio=valid_ratio)
