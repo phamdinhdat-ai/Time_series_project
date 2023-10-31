@@ -11,13 +11,13 @@ from utils.plot import plot_performance
 #load data
 # train_path = 'data/dynamic1/train/train_PhamQuangTu.npy'
 
-train_folder = 'data/dynamic2/new_data_static/trainset'
-test_path = 'data/dynamic2/new_data_static/testset'
+train_folder = 'data/new_data_static/trainset'
+test_path = 'data/new_data_static/testset'
 
 opt = parse_opt(True)
 
 BATCH_SIZE = opt.batch_size
-EPOCHS = opt.epoches
+EPOCHS = opt.epochs
 
 model_type = opt.model_type
 data_type = opt.data_type
