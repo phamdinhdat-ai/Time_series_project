@@ -110,7 +110,7 @@ for file in os.listdir(test_path):
     name = file.split("_")[-1]
     print(f"<=======>Test on {name[:-4]}'s data<=======>\n")
     file_dir = f"{test_path}/{file}"
-    X_test, y_test = load_and_process_data(file_path=file_dir,valid_ratio=None)
+    X_test, y_test = load_and_process_data(file_path=file_dir,sequence_length= opt.sequence_length, overlap = opt.overlap,valid_ratio=None)
     ds_test = tensorflow_dataset(data=X_test, labels=y_test, batch_size=BATCH_SIZE)
     results = test_model(dataset=ds_test, model=model, loss_fn = loss_fn)
     print(f"Result on {name}'s data: ", results)
