@@ -30,7 +30,6 @@ def estimate_lipschitz_constant_model(model, inputs):
 
 
 import numpy as np
-@tf.function
 def estimate_lipschitz_constant_model_v1(model, inputs, epsilon=1e-3, max_iters=10):
     # Generate random inputs within the specified shape
     x = inputs
