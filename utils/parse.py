@@ -6,6 +6,7 @@ def parse_opt(known=False):
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_type', type=str, default="transformer", help='name of model training')
     parser.add_argument('--data_type', type=str, default="dynamic", help='name of dataset training')
+    parser.add_argument('--scenario', type=str, default=None, help='senarios to split dataset training(person_divide or sample_divide)')
     parser.add_argument('--num_classes', type=int, default=5, help='numbers of classes in the dataset')
     parser.add_argument('--epochs', type=int, default=100, help='epochs')
     parser.add_argument('--sequence_length', type=int, default=None, help='sequence_length for Sequence model')
