@@ -57,7 +57,13 @@ else:
 #load data
 
 print("<=====> Training progress <=====>")
-X_train, X_val, y_train, y_val = load_from_folder(folder_path=train_folder, sequence_length=config.timestep, overlap=opt.overlap, valid_ratio=0.2)
+
+print("<=====> Training progress <=====>")
+if opt.scenario is not None:
+    print("Combine all data of 16 person and split with ratio at 0.75-0.25 (12-4) for train/test")
+    X_train, X_val, y_train, y_val = load_and_process_data(file_path='./data/dataset/trainset_16.npy', sequence_length=config.timestep, overlap=opt.overlap, valid_ratio=0.2)
+else:
+    X_train, X_val, y_train, y_val = load_from_folder(folder_path=train_folder, sequence_length=config.timestep, overlap=opt.overlap, valid_ratio=0.2)
 print("shape of training data: ", X_train.shape)
 print("shape of validation data: ", X_val.shape)
 ds_train = tensorflow_dataset(data=X_train, labels=y_train, batch_size=BATCH_SIZE)
@@ -74,31 +80,6 @@ loss_fn = tf.keras.losses.CategoricalCrossentropy()
 #set up optimizer  chosen by implement in configure
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
-# #set up loss function chosen by implement in configure
-# # if Config.loss_fn == 'categorical-crossentropy':
-# #     loss_fn = tf.keras.losses.CategoricalCrossentropy()
-# # if Config.loss_fn == 'sparse-categorical-crossentropy':
-# #     loss_fn = tf.keras.losses.SparseCategoricalCrossentropy()
-# # if Config.loss_fn == 'binary-crossentropy':
-# #     loss_fn = tf.keras.losses.BinaryCrossentropy()
-# # if Config.loss_fn == 'mse':
-# #     loss_fn = tf.keras.losses.MeanSquaredError()
-# # if Config.loss_fn == 'mae':
-# #     loss_fn = tf.keras.losses.MeanAbsoluteError()
-# # else: 
-# #     loss_fn = tf.keras.losses.CategoricalCrossentropy()
-
-# # #set up optimizer  chosen by implement in configure
-
-# # if Config.optimizer == "adam":
-# #     optimizer = tf.keras.optimizers.Adam(learning_rate=Config.lr)
-# # if Config.optimizer == "adamax":
-# #     optimizer = tf.keras.optimizers.Adamax(learning_rate=Config.lr)
-# # if Config.optimizer == "SGD":
-# #     optimizer = tf.keras.optimizers.SGD(learning_rate=Config.lr)
-# # else:
-# #     optimizer = tf.keras.optimizers.Adam(learning_rate=Config.lr)
-
 # training progress
 print("Training Model ........")
 history, model = train_model(model=model, dataset=ds_train, loss_fn=loss_fn, optimizer=optimizer,epochs=EPOCHS, val_dataset=ds_val)
@@ -106,21 +87,35 @@ history, model = train_model(model=model, dataset=ds_train, loss_fn=loss_fn, opt
 history["test"]  = dict()
 #test progress
 
-for file in os.listdir(test_path):  
-    name = file.split("_")[-1]
-    print(f"<=======>Test on {name[:-4]}'s data<=======>\n")
-    file_dir = f"{test_path}/{file}"
-    X_test, y_test = load_and_process_data(file_path=file_dir,sequence_length= opt.sequence_length, overlap = opt.overlap,valid_ratio=None)
+if opt.scenario is not None:
+    scenario = opt.scenario
+    print("<====== Evaluate on testset =======>")
+
+    X_test, y_test = load_and_process_data(file_path='./data/dataset/testset_16.npy',sequence_length= opt.sequence_length, overlap = opt.overlap, valid_ratio=None)
     ds_test = tensorflow_dataset(data=X_test, labels=y_test, batch_size=BATCH_SIZE)
     results = test_model(dataset=ds_test, model=model, loss_fn = loss_fn)
-    print(f"Result on {name}'s data: ", results)
+    print("Result on testste: \n", results)
     metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model"]
-    history["test"][name[:-4]] = dict()
+    history["test"] = dict()
     for metric, result in zip(metrics, results):
-        history["test"][name[:-4]][metric] = result
+        history["test"][metric] = result
+else:
+    for file in os.listdir(test_path):  
+        scenario = 'person_divide'
+        name = file.split("_")[-1]
+        print(f"<=======>Test on {name[:-4]}'s data<=======>\n")
+        file_dir = f"{test_path}/{file}"
+        X_test, y_test = load_and_process_data(file_path=file_dir,sequence_length= opt.sequence_length, overlap = opt.overlap, valid_ratio=None)
+        ds_test = tensorflow_dataset(data=X_test, labels=y_test, batch_size=BATCH_SIZE)
+        results = test_model(dataset=ds_test, model=model, loss_fn = loss_fn)
+        print(f"Result on {name}'s data: ", results)
+        metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model"]
+        history["test"][name[:-4]] = dict()
+        for metric, result in zip(metrics, results):
+            history["test"][name[:-4]][metric] = result
 
 print(history)
-with open("{}_{}_{}_{}_{}_{}.pkl".format(model_type,data_type,EPOCHS, BATCH_SIZE, opt.sequence_length, opt.overlap), 'wb') as  f:
+with open("{}_{}_{}_{}_{}_{}_{}.pkl".format(model_type,data_type,EPOCHS, BATCH_SIZE, opt.sequence_length, opt.overlap, scenario), 'wb') as  f:
     pickle.dump(history, f)
 plot_performance(history=history, model_type=model_type)
 
