@@ -49,7 +49,7 @@ import keras
 
 train_acc_metric = keras.metrics.Accuracy()
 val_acc_metric = keras.metrics.Accuracy()
-
+@tf.function
 def train_model(model,
                 dataset,
                 loss_fn,
@@ -174,7 +174,7 @@ def train_model(model,
         history["Val_L_model"] = np.array(val_lipschitz_model).mean(axis=1)
 
     return history, model
-
+@tf.function
 def test_model(dataset, model, loss_fn):
     t_loss = []
     t_acc  = []
