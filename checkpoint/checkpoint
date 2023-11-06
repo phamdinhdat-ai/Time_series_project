@@ -1,0 +1,2 @@
+model_checkpoint_path: "mlp_static_20_0.1_person_divide"
+all_model_checkpoint_paths: "mlp_static_20_0.1_person_divide"
