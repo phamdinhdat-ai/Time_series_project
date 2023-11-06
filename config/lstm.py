@@ -11,7 +11,7 @@ class Config:
     activation = 'tanh'
     regularizers = 'l1'
     normalizer = 'batch norm'
-    lr  = 0.001,
+    lr  = 0.01,
     optimizer = 'adam',
     loss_fn = 'categorical-crossentropy'
     
