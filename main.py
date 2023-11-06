@@ -31,6 +31,7 @@ if model_type == "lstm":
     config.timestep = opt.sequence_length
     model_lstm = LSTM(config=config)
     model = model_lstm.build()
+    print(model.summary())
 if model_type =='cnn':
     #set up training
     # load model with configure
@@ -41,6 +42,17 @@ if model_type =='cnn':
     config.timestep = opt.sequence_length
     model_cnn = CNN(config=config)
     model = model_cnn.build()
+    print(model.summary())
+if model_type == 'mlp':
+    from model.mlp import MLP
+    from config.mlp import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    model_mlp = MLP(config=config)
+    model = model_mlp.build()
+    print(model.summary())
+
 
 else: 
     from model.lstm import LSTM
@@ -51,8 +63,11 @@ else:
     config.n_classes = opt.num_classes 
     config.timestep = opt.sequence_length
     model_lstm = LSTM(config=config)
+    model = model_lstm.build()
 
-
+if opt.check_point is not None:
+    # lastest = tf.train.latest_checkpoint(str(opt.check_point))
+    model = tf.keras.models.load_model(str(opt.check_point))
 
 #load data
 
@@ -71,7 +86,7 @@ ds_val = tensorflow_dataset(data=X_val, labels=y_val, batch_size=BATCH_SIZE)
 #set up training
 # load model with configure
 
-print(model.summary())
+# print(model.summary())
 
 estimate_interval_loss_fn = 10
 estimate_interval_model = 10
@@ -113,9 +128,9 @@ else:
         history["test"][name[:-4]] = dict()
         for metric, result in zip(metrics, results):
             history["test"][name[:-4]][metric] = result
-
+model.save(f"./checkpoint/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
 print(history)
-with open("{}_{}_{}_{}_{}_{}_{}.pkl".format(model_type,data_type,EPOCHS, BATCH_SIZE, opt.sequence_length, opt.overlap, scenario), 'wb') as  f:
+with open("./work_dir/{}_{}_{}_{}_{}_{}_{}.pkl".format(model_type,data_type,EPOCHS, BATCH_SIZE, opt.sequence_length, opt.overlap, scenario), 'wb') as  f:
     pickle.dump(history, f)
 plot_performance(history=history, model_type=model_type)
 
