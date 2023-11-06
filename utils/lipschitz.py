@@ -2,6 +2,7 @@ import tensorflow as tf
 
 
 # Define a function to compute the Lipschitz constant of the loss function
+@tf.function
 def estimate_lipschitz_constant_loss_fn(model, loss_fn, inputs, labels):
     with tf.GradientTape() as tape:
         tape.watch(inputs)
@@ -13,6 +14,7 @@ def estimate_lipschitz_constant_loss_fn(model, loss_fn, inputs, labels):
     return gradients_norm
 
 # Define a function to compute the Lipschitz constant of the model
+@tf.function
 def estimate_lipschitz_constant_model(model, inputs):
     with tf.GradientTape() as tape:
         tape.watch(inputs)
@@ -28,7 +30,6 @@ def estimate_lipschitz_constant_model(model, inputs):
 
 
 import numpy as np
-
 def estimate_lipschitz_constant_model_v1(model, inputs, epsilon=1e-3, max_iters=10):
     # Generate random inputs within the specified shape
     x = inputs

@@ -51,7 +51,10 @@ import keras
 
 train_acc_metric = keras.metrics.Accuracy()
 val_acc_metric = keras.metrics.Accuracy()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0afc4d829e8f2218b7e23b2990208a73326d09ba
 def train_model(model,
                 dataset,
                 loss_fn,
@@ -212,7 +215,10 @@ def train_model(model,
             with open("./work_dir/training_history_{}_{}.pkl".format(model.__class__.__name__,epoch), 'wb') as  f:
                 pickle.dump(history, f)
     return history, model
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0afc4d829e8f2218b7e23b2990208a73326d09ba
 def test_model(dataset, model, loss_fn):
     t_loss = []
     t_acc  = []
