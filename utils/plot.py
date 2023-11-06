@@ -31,7 +31,7 @@ def plot_performance(history, model_type):
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend(["Train", "Valid"])
-    plt.savefig(f"{model_type}_loss.png")
+    plt.savefig(f"./work_dir/{model_type}_loss.png")
     plt.show()
     #plot accuracy model 
     plt.plot(train_val_acc)
@@ -39,7 +39,7 @@ def plot_performance(history, model_type):
     plt.xlabel("Epochs")
     plt.ylabel("Accuracy")
     plt.legend(["Train", "Valid"])
-    plt.savefig(f"{model_type}_acc.png")
+    plt.savefig(f"./work_dir/{model_type}_acc.png")
     plt.show()
     #plot lipschitz loss function 
     plt.plot(train_val_l_loss)
@@ -47,7 +47,7 @@ def plot_performance(history, model_type):
     plt.xlabel("Epochs")
     plt.ylabel("Lipschitz contant")
     plt.legend(["Train", "Valid"])
-    plt.savefig(f"{model_type}_L_loss.png")
+    plt.savefig(f"./work_dir/{model_type}_L_loss.png")
     plt.show()
     #plot lipshitz model 
     plt.plot(train_val_l_model)
@@ -55,6 +55,6 @@ def plot_performance(history, model_type):
     plt.xlabel("Epochs")
     plt.ylabel("Lipschitz constant")
     plt.legend(["Train", "Valid"])
-    plt.savefig(f"{model_type}_L_model.png")
+    plt.savefig(f"./work_dir/{model_type}_L_model.png")
     plt.show()
 
