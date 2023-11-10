@@ -7,6 +7,7 @@ import keras
 import numpy as np 
 import pickle
 import time
+import os 
 # Prepare the metrics.
 acc_metric = keras.metrics.Accuracy()
 
@@ -58,7 +59,8 @@ def train_model(model,
                 optimizer,
                 epochs= 100,  
                 estimate_interval = 10,
-                val_dataset=None):
+                val_dataset=None,
+                arg = None):
     loss_model = []
     acc_model  = []
     lipschitz_loss = []
@@ -77,7 +79,7 @@ def train_model(model,
     L_model = [],
     Time_train = [],
     Val_loss = [],
-    Val_acc = [],
+    Val_Acc = [],
     Val_L_loss = [],
     Val_L_model = [],
     Time_val = [],
@@ -103,8 +105,9 @@ def train_model(model,
         time_train = 0
         time_val = 0
         start = time.time()
+        # print(len(dataset))
         for step,(inputs, labels) in enumerate(dataset):
-            
+            # print(inputs.shape)
             with tf.GradientTape() as tape:
                 # forward pass 
                 output = model(inputs, training=True)
@@ -145,10 +148,14 @@ def train_model(model,
             mean_l_loss +=lipschitz_constant_loss_fn
             mean_l_model += lipschitz_constant_model
             time_train +=time_train_batch
+        print("loss")
+        print(loss)
 
         start2 = time.time()
         #compute validaion results 
-        for x_batch_val, y_batch_val in val_dataset:
+        # print(len(val_dataset))
+        for step,(x_batch_val, y_batch_val) in enumerate(val_dataset):
+            # print(x_batch_val.shape)
             val_out = model(x_batch_val, training=False)
             #compute val loss
             val_loss = loss_fn(val_out, y_batch_val)
@@ -175,6 +182,8 @@ def train_model(model,
             mean_val_l_loss  += val_l_loss 
             mean_val_l_model += val_l_model
             time_val += time_val_batch
+        print("val_loss")
+        print(val_loss)
 
             # eloss.append(loss)
             # eacc.append(train_acc)
@@ -230,8 +239,10 @@ def train_model(model,
         history["Val_L_model"].append(mean_val_l_model/len(val_dataset))
         history['Time_val'].append(time_val)
         if epoch%10 == 0:
-            model.save(f"./checkpoint/{model.__class__.__name__}_{epoch}.keras")
-            with open("./work_dir/training_history_{}_{}.pkl".format(model.__class__.__name__,epoch), 'wb') as  f:
+            filename = "./work_dir/hist_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap, arg.model_type,epoch)
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            model.save(f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}/{arg.model_type}_{epoch}.keras")
+            with open("./work_dir/hist_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap, arg.model_type,epoch), 'wb') as  f:
                 pickle.dump(history, f)
     return history, model
 def test_model(dataset, model, loss_fn):
