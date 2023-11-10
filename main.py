@@ -97,7 +97,7 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
 # training progress
 print("Training Model ........")
-history, model = train_model(model=model, dataset=ds_train, loss_fn=loss_fn, optimizer=optimizer,epochs=EPOCHS, val_dataset=ds_val)
+history, model = train_model(model=model, dataset=ds_train, loss_fn=loss_fn, optimizer=optimizer,epochs=EPOCHS, val_dataset=ds_val, arg=opt)
 
 history["test"]  = dict()
 #test progress
@@ -128,11 +128,13 @@ else:
         history["test"][name[:-4]] = dict()
         for metric, result in zip(metrics, results):
             history["test"][name[:-4]][metric] = result
-model.save(f"./checkpoint/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
+model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
 print(history)
-with open("./work_dir/{}_{}_{}_{}_{}_{}_{}.pkl".format(model_type,data_type,EPOCHS, BATCH_SIZE, opt.sequence_length, opt.overlap, scenario), 'wb') as  f:
+filename = "./work_dir/hist_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap, EPOCHS, BATCH_SIZE,  scenario)
+os.makedirs(os.path.dirname(filename), exist_ok=True)
+with open("./work_dir/hist_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap, EPOCHS, BATCH_SIZE,  scenario), 'wb') as  f:
     pickle.dump(history, f)
-plot_performance(history=history, model_type=model_type)
+plot_performance(history=history, model_type=model_type, arg=opt)
 
 if __name__ == "__main__":
     opt = parse_opt(True)
