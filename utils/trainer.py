@@ -220,7 +220,7 @@ def train_model(model,
         # history["Val_L_model"] = np.array(val_lipschitz_model).mean(axis=1)
         # history['Time_val'] = np.array(time_run_val)
         history["Loss"].append(mean_loss/(len(dataset)))
-        history["Acc"].append(mean_acc/len(dataset)))
+        history["Acc"].append(mean_acc/len(dataset))
         history["L_loss"].append(mean_l_loss/len(dataset))
         history["L_model"].append(mean_l_model/len(dataset))
         history['Time_train'].append(time_train)
