@@ -69,7 +69,19 @@ def train_model(model,
     val_lipschitz_model = []
     time_run_train = []
     time_run_val = []
-    history = dict()
+    # history = dict()
+    history = dict(
+    Loss = [],
+    Acc = [],
+    L_loss = [],
+    L_model = [],
+    Time_train = [],
+    Val_loss = [],
+    Val_acc = [],
+    Val_L_loss = [],
+    Val_L_model = [],
+    Time_val = [],
+    )
     for epoch in range(epochs):
         eloss = []
         eacc  = []
@@ -183,7 +195,7 @@ def train_model(model,
             # mean_val_l_loss  += val_l_loss 
             # mean_val_l_model += val_l_model
 
-        print(f"\rEpoch: {epoch}| Loss: {mean_loss/(len(dataset))} | Acc: {mean_acc/(len(dataset))} | Lipschitz Loss: {mean_l_loss/(len(dataset))}  | Lipschitz Model: {mean_l_model/(len(dataset))}|Time training: {time_train/len(dataset)}| Val Loss: {mean_val_loss/(len(val_dataset))}| Val_Acc: {mean_val_acc/len(val_dataset)}| Val L_loss: {mean_val_l_loss/len(val_dataset)}| Val L_model: {mean_val_l_model/len(val_dataset)}| Time Val: {time_val/len(val_dataset)}" , end=" ", flush=True)
+        print(f"\rEpoch: {epoch}| Loss: {mean_loss/(len(dataset))} | Acc: {mean_acc/(len(dataset))} | Lipschitz Loss: {mean_l_loss/(len(dataset))}  | Lipschitz Model: {mean_l_model/(len(dataset))}|Time training: {time_train}| Val Loss: {mean_val_loss/(len(val_dataset))}| Val_Acc: {mean_val_acc/len(val_dataset)}| Val L_loss: {mean_val_l_loss/len(val_dataset)}| Val L_model: {mean_val_l_model/len(val_dataset)}| Time Val: {time_val}" , end=" ", flush=True)
 
             # print(f"\rEpoch: {epoch}| Steps:{'-'*step}  | Loss: {loss} | Acc: {acc} | Lipschitz Loss: {lipschitz_constant_loss_fn}  | Lipschitz Model: {lipschitz_constant_model}" , end=" ", flush=True)
         print("\n")
@@ -197,16 +209,26 @@ def train_model(model,
         val_lipschitz_loss.append(val_elipschitz_loss)
         val_lipschitz_model.append(val_elipschitz_model)
         time_run_val.append(time_val)
-        history["Loss"] = np.array(loss_model).mean(axis=1)
-        history["Acc"] = np.array(acc_model).mean(axis=1)
-        history["L_loss"] = np.array(lipschitz_loss).mean(axis=1)
-        history["L_model"] = np.array(lipschitz_model).mean(axis=1)
-        history['Time_train'] = np.array(time_run_train)
-        history["Val_loss"] = np.array(val_loss_model).mean(axis=1)
-        history["Val_Acc"] = np.array(val_acc_model).mean(axis=1)
-        history["Val_L_loss"] = np.array(val_lipschitz_loss).mean(axis=1)
-        history["Val_L_model"] = np.array(val_lipschitz_model).mean(axis=1)
-        history['Time_val'] = np.array(time_run_val)
+        # history["Loss"] = np.array(loss_model).mean(axis=1)
+        # history["Acc"] = np.array(acc_model).mean(axis=1)
+        # history["L_loss"] = np.array(lipschitz_loss).mean(axis=1)
+        # history["L_model"] = np.array(lipschitz_model).mean(axis=1)
+        # history['Time_train'] = np.array(time_run_train)
+        # history["Val_loss"] = np.array(val_loss_model).mean(axis=1)
+        # history["Val_Acc"] = np.array(val_acc_model).mean(axis=1)
+        # history["Val_L_loss"] = np.array(val_lipschitz_loss).mean(axis=1)
+        # history["Val_L_model"] = np.array(val_lipschitz_model).mean(axis=1)
+        # history['Time_val'] = np.array(time_run_val)
+        history["Loss"].append(mean_loss/(len(dataset)))
+        history["Acc"].append(mean_acc/len(dataset)))
+        history["L_loss"].append(mean_l_loss/len(dataset))
+        history["L_model"].append(mean_l_model/len(dataset))
+        history['Time_train'].append(time_train)
+        history["Val_loss"].append(mean_val_loss/len(val_dataset))
+        history["Val_Acc"].append(mean_val_acc/len(val_dataset))
+        history["Val_L_loss"].append(mean_val_l_loss/len(val_dataset))
+        history["Val_L_model"].append(mean_val_l_model/len(val_dataset))
+        history['Time_val'].append(time_val)
         if epoch%10 == 0:
             model.save(f"./checkpoint/{model.__class__.__name__}_{epoch}.keras")
             with open("./work_dir/training_history_{}_{}.pkl".format(model.__class__.__name__,epoch), 'wb') as  f:
