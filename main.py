@@ -128,11 +128,11 @@ else:
         history["test"][name[:-4]] = dict()
         for metric, result in zip(metrics, results):
             history["test"][name[:-4]][metric] = result
-model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
+model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
 print(history)
-filename = "./work_dir/hist_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap, EPOCHS, BATCH_SIZE,  scenario)
+filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario)
 os.makedirs(os.path.dirname(filename), exist_ok=True)
-with open("./work_dir/hist_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap, EPOCHS, BATCH_SIZE,  scenario), 'wb') as  f:
+with open("./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario), 'wb') as  f:
     pickle.dump(history, f)
 plot_performance(history=history, model_type=model_type, arg=opt)
 
