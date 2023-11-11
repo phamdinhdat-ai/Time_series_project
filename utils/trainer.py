@@ -241,6 +241,8 @@ def train_model(model,
         history['Time_val'].append(time_val)
         if epoch%10 == 0:
             filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,scenario, arg.model_type,epoch)
+            checkpoint_pth = f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{scenario}/{arg.model_type}_{epoch}.keras"
+            os.makedirs(os.path.dirname(checkpoint_pth), exist_ok=True)
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             model.save(f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{scenario}/{arg.model_type}_{epoch}.keras")
             with open("./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,scenario, arg.model_type,epoch), 'wb') as  f:
