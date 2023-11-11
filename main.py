@@ -128,6 +128,8 @@ else:
         history["test"][name[:-4]] = dict()
         for metric, result in zip(metrics, results):
             history["test"][name[:-4]][metric] = result
+checkpoint_pth = f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras"
+os.makedirs(os.path.dirname(checkpoint_pth), exist_ok=True)
 model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
 print(history)
 filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario)
