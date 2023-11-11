@@ -151,8 +151,7 @@ def train_model(model,
             mean_l_loss +=lipschitz_constant_loss_fn
             mean_l_model += lipschitz_constant_model
             time_train +=time_train_batch
-        print("loss")
-        print(loss)
+       
 
         start2 = time.time()
         #compute validaion results 
@@ -185,8 +184,7 @@ def train_model(model,
             mean_val_l_loss  += val_l_loss 
             mean_val_l_model += val_l_model
             time_val += time_val_batch
-        print("val_loss")
-        print(val_loss)
+        
 
             # eloss.append(loss)
             # eacc.append(train_acc)
