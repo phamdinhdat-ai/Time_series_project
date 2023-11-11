@@ -61,6 +61,9 @@ def train_model(model,
                 estimate_interval = 10,
                 val_dataset=None,
                 arg = None):
+    scenario = 'person_divide'
+    if arg.scenario is not None:
+        scenario = "sample_divide"
     loss_model = []
     acc_model  = []
     lipschitz_loss = []
@@ -239,10 +242,10 @@ def train_model(model,
         history["Val_L_model"].append(mean_val_l_model/len(val_dataset))
         history['Time_val'].append(time_val)
         if epoch%10 == 0:
-            filename = "./work_dir/hist_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap, arg.model_type,epoch)
+            filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,scenario, arg.model_type,epoch)
             os.makedirs(os.path.dirname(filename), exist_ok=True)
-            model.save(f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}/{arg.model_type}_{epoch}.keras")
-            with open("./work_dir/hist_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap, arg.model_type,epoch), 'wb') as  f:
+            model.save(f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{scenario}/{arg.model_type}_{epoch}.keras")
+            with open("./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,scenario, arg.model_type,epoch), 'wb') as  f:
                 pickle.dump(history, f)
     return history, model
 def test_model(dataset, model, loss_fn):
