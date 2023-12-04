@@ -12,6 +12,7 @@ def parse_opt(known=False):
     parser.add_argument('--sequence_length', type=int, default=None, help='sequence_length for Sequence model')
     parser.add_argument('--overlap', type=float, default=None, help='overlap of window across samples')
     parser.add_argument('--batch_size', type=int, default=128, help='setting batch_size')
+    parser.add_argument('--normalizer', type=str, default=None, help='setting Normalization technique')
     parser.add_argument('--check_point', type=str, default=None, help='path to model checkpoint')
     parser.add_argument('--plot', type=bool, default=True, help='plot performance')
     return parser.parse_known_args()[0] if known else parser.parse_args()
