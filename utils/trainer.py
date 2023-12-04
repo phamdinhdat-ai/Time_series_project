@@ -2,7 +2,7 @@
 
 from comet_ml import Experiment
 experiment = Experiment(
-  api_key="7lyVL5fNdeeqtYZK9Smpz5RGX",
+  api_key="********your key***",
   project_name="journal-2023",
   workspace="datphamai"
 )
