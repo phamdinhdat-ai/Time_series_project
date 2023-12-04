@@ -28,12 +28,12 @@ class LSTM(keras.Model):
         self.optimizer = self.config.optimizer
         self.loss_fn = self.config.loss_fn
         
-        if self.config.normalizer == "batch norm":
+        if self.config.normalizer == "batch_norm":
             self.normalizer = layers.BatchNormalization()
-        elif self.config.normalizer == "layer norm":
+        elif self.config.normalizer == "layer_norm":
             self.normalizer = layers.LayerNormalization()
         else:
-            self.normalizer = BatchNorm()
+            self.normalizer = None
 
 
         if self.config.regularizers == 'l1':
@@ -50,14 +50,21 @@ class LSTM(keras.Model):
         x = input
         for hidden in self.hidden_size:
             x = layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers)(x)
-            # x = self.normalizer(x)
+            
+            if self.normalizer is not None:
+                x = layers.BatchNormalization()(x)
+            else:
+                pass
             x = layers.Dropout(self.dropout)(x)
 
         x = layers.Flatten()(x)
         
         for unit in self.mlp_units:
             x = layers.Dense(unit, activation = self.activation, kernel_regularizer=self.regularizers)(x)
-            x = self.normalizer(x)
+            if self.normalizer is not None:
+                x = layers.BatchNormalization()(x)
+            else:
+                pass
             x = layers.Dropout(self.dropout)(x)
 
         out = layers.Dense(self.n_classes, activation='softmax')(x)
