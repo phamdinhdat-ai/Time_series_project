@@ -8,8 +8,8 @@ from utils.load_data import load_and_process_data, tensorflow_dataset, load_from
 # from utils.trainer import test_model
 from utils.parse import parse_opt
 from utils.plot import plot_performance
-from utils.trainer2 import train_model
-from utils.trainer2 import test_model
+from utils.trainer import train_model
+from utils.trainer import test_model
 from datetime import date
 import keras
 print(tf.__version__)
