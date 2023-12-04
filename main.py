@@ -3,11 +3,18 @@ import os
 import tensorflow as tf
 from model.lstm import LSTM
 from config.lstm import Config
-from utils.trainer import train_model
+# from utils.trainer import train_model
 from utils.load_data import load_and_process_data, tensorflow_dataset, load_from_folder
-from utils.trainer import test_model
+# from utils.trainer import test_model
 from utils.parse import parse_opt
 from utils.plot import plot_performance
+from utils.trainer2 import train_model
+from utils.trainer2 import test_model
+from datetime import date
+import keras
+print(tf.__version__)
+
+today = str(date.today())
 #load data
 # train_path = 'data/dynamic1/train/train_PhamQuangTu.npy'
 
@@ -27,6 +34,7 @@ if model_type == "lstm":
     #set up training
     # load model with configure
     config = Config
+    config.normalizer = opt.normalizer
     config.n_classes = opt.num_classes 
     config.timestep = opt.sequence_length
     model_lstm = LSTM(config=config)
@@ -62,17 +70,14 @@ else:
     config = Config
     config.n_classes = opt.num_classes 
     config.timestep = opt.sequence_length
+    config.normalizer = opt.normalizer
     model_lstm = LSTM(config=config)
     model = model_lstm.build()
 
 if opt.check_point is not None:
-    # lastest = tf.train.latest_checkpoint(str(opt.check_point))
     model = tf.keras.models.load_model(str(opt.check_point))
 
 #load data
-
-print("<=====> Training progress <=====>")
-
 print("<=====> Training progress <=====>")
 if opt.scenario is not None:
     print("Combine all data of 16 person and split with ratio at 0.75-0.25 (12-4) for train/test")
@@ -81,37 +86,39 @@ else:
     X_train, X_val, y_train, y_val = load_from_folder(folder_path=train_folder, sequence_length=config.timestep, overlap=opt.overlap, valid_ratio=0.2)
 print("shape of training data: ", X_train.shape)
 print("shape of validation data: ", X_val.shape)
-ds_train = tensorflow_dataset(data=X_train, labels=y_train, batch_size=BATCH_SIZE)
-ds_val = tensorflow_dataset(data=X_val, labels=y_val, batch_size=BATCH_SIZE)
+
+
+
+
+train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BATCH_SIZE)
+val_dataset = tf.data.Dataset.from_tensor_slices((X_val, y_val))
+val_dataset = val_dataset.batch(BATCH_SIZE)
+
+print("===Load data passed====")
 #set up training
-# load model with configure
-
-# print(model.summary())
-
-estimate_interval_loss_fn = 10
-estimate_interval_model = 10
 
 loss_fn = tf.keras.losses.CategoricalCrossentropy()
 #set up optimizer  chosen by implement in configure
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-
+optimizer = tf.keras.optimizers.Adam()
 # training progress
 print("Training Model ........")
-history, model = train_model(model=model, dataset=ds_train, loss_fn=loss_fn, optimizer=optimizer,epochs=EPOCHS, val_dataset=ds_val, arg=opt)
-
+history, model = train_model(model=model, dataset=train_dataset, loss_fn=loss_fn, optimizer=optimizer,epochs=EPOCHS, val_dataset=val_dataset, batch_size=BATCH_SIZE,  arg=opt)
+print("=====Training Done !====")
 history["test"]  = dict()
 #test progress
 
 if opt.scenario is not None:
     scenario = opt.scenario
     print("<====== Evaluate on testset =======>")
-
     X_test, y_test = load_and_process_data(file_path='./data/dataset/testset_16.npy',sequence_length= opt.sequence_length, overlap = opt.overlap, valid_ratio=None)
-    ds_test = tensorflow_dataset(data=X_test, labels=y_test, batch_size=BATCH_SIZE)
-    results = test_model(dataset=ds_test, model=model, loss_fn = loss_fn)
+    ds_test = tf.data.Dataset.from_tensor_slices((X_test, y_test))
+    ds_test = ds_test.batch(BATCH_SIZE)
+    cl_report, cf_matrix, results = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
     print("Result on testste: \n", results)
-    metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model"]
-    history["test"] = dict()
+    metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
+    history["test"]['cl_report'] = cl_report
+    history["test"]['cf_matrix'] = cf_matrix
     for metric, result in zip(metrics, results):
         history["test"][metric] = result
 else:
@@ -121,21 +128,45 @@ else:
         print(f"<=======>Test on {name[:-4]}'s data<=======>\n")
         file_dir = f"{test_path}/{file}"
         X_test, y_test = load_and_process_data(file_path=file_dir,sequence_length= opt.sequence_length, overlap = opt.overlap, valid_ratio=None)
-        ds_test = tensorflow_dataset(data=X_test, labels=y_test, batch_size=BATCH_SIZE)
-        results = test_model(dataset=ds_test, model=model, loss_fn = loss_fn)
+        ds_test = tf.data.Dataset.from_tensor_slices((X_test, y_test))
+        ds_test = ds_test.batch(BATCH_SIZE)
+        cl_report, cf_matrix,results = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
         print(f"Result on {name}'s data: ", results)
-        metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model"]
+        metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
         history["test"][name[:-4]] = dict()
+        history["test"][name[:-4]]['cl_report'] = cl_report
+        history["test"][name[:-4]]['cf_matrix'] = cf_matrix
+        
         for metric, result in zip(metrics, results):
             history["test"][name[:-4]][metric] = result
-checkpoint_pth = f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras"
-os.makedirs(os.path.dirname(checkpoint_pth), exist_ok=True)
-model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
+            
+            
+
+# checkpoint_pth = f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras"
+# os.makedirs(os.path.dirname(checkpoint_pth), exist_ok=True)
+# model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
 print(history)
-filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario)
+# import numpy as np
+# arr  = np.zeros((4, 4))
+
+# for i, (person, metrics) in enumerate(history["test"].items()):
+#   print(person, metrics)
+#   arr[i][0]  = metrics["Loss"]
+#   arr[i][1] = metrics["Acc"]
+#   arr[i][2] = metrics["Lipschitz Loss"]
+#   arr[i][3] = metrics["Lipshitz model"]
+
+
+
+# history['test']['mean'] = np.mean(arr, axis = 0 )
+# history['test']['std'] = np.std(arr, axis = 0)
+
+filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario, today)
 os.makedirs(os.path.dirname(filename), exist_ok=True)
-with open("./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario), 'wb') as  f:
+with open(filename, 'wb') as  f:
     pickle.dump(history, f)
+    
+
 plot_performance(history=history, model_type=model_type, arg=opt)
 
 if __name__ == "__main__":
