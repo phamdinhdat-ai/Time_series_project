@@ -1,0 +1,7 @@
+tensorflow
+sklearn 
+numpy==1.22.0
+matplotlib 
+comet_ml 
+pandas 
+keras
