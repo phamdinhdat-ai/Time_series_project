@@ -1,3 +1,11 @@
+
+
+from comet_ml import Experiment
+experiment = Experiment(
+  api_key="7lyVL5fNdeeqtYZK9Smpz5RGX",
+  project_name="journal-2023",
+  workspace="datphamai"
+)
 import tensorflow as tf 
 from config.base_config import BaseConfig
 from config.lstm import Config
@@ -8,11 +16,18 @@ import numpy as np
 import pickle
 import time
 import os 
+import time
+from datetime import date
+import tensorboard
+
+today = str(date.today())
 # Prepare the metrics.
 acc_metric = keras.metrics.Accuracy()
 
 estimate_interval_loss_fn = 10
 estimate_interval_model = 10
+
+
 
 #set up loss function chosen by implement in configure
 if BaseConfig.loss_fn == 'categorical-crossentropy':
@@ -26,254 +41,244 @@ if BaseConfig.loss_fn == 'mse':
 if BaseConfig.loss_fn == 'mae':
     loss_fn = tf.keras.losses.MeanAbsoluteError()
 
-#set up optimizer  chosen by implement in configure
-
-if BaseConfig.optimizer == "adam":
-    optimizer = tf.keras.optimizers.Adam(learning_rate=Config.lr)
-if BaseConfig.optimizer == "adamax":
-    optimizer = tf.keras.optimizers.Adamax(learning_rate=Config.lr)
-if BaseConfig.optimizer == "SGD":
-    optimizer = tf.keras.optimizers.SGD(learning_rate=Config.lr)
 
 
-# # model 
 
-# base_model = LSTM(config=Config)
-# model = base_model.build()
-
-def accuracy_score(y_true, y_pre):
-    count  = 0
-    for i in range(len(y_true)):
-        if y_true[i] == y_pre[i]:
-            count +=1 
-    return count/len(y_true)
-
-import keras
-
+# Prepare the metrics.
+acc_metric = keras.metrics.Accuracy()
 train_acc_metric = keras.metrics.Accuracy()
 val_acc_metric = keras.metrics.Accuracy()
+
+
+
 
 def train_model(model,
                 dataset,
                 loss_fn,
                 optimizer,
                 epochs= 100,  
-                estimate_interval = 10,
+                batch_size = 512,
                 val_dataset=None,
                 arg = None):
-    scenario = 'person_divide'
-    if arg.scenario is not None:
-        scenario = "sample_divide"
-    loss_model = []
-    acc_model  = []
-    lipschitz_loss = []
-    lipschitz_model = []
-    val_loss_model = []
-    val_acc_model  = []
-    val_lipschitz_loss = []
-    val_lipschitz_model = []
-    time_run_train = []
-    time_run_val = []
-    # history = dict()
+    
     history = dict(
-    Loss = [],
-    Acc = [],
-    L_loss = [],
-    L_model = [],
-    Time_train = [],
-    Val_loss = [],
-    Val_Acc = [],
-    Val_L_loss = [],
-    Val_L_model = [],
-    Time_val = [],
-    )
+        Loss = [],
+        Acc = [],
+        L_loss = [],
+        L_model = [],
+        Val_loss = [],
+        Val_acc = [],
+        Val_L_loss = [],
+        Val_L_model = [],
+        Time = [],
+        )
+    
+    min_val_loss = np.inf
     for epoch in range(epochs):
-        eloss = []
-        eacc  = []
-        elipschitz_loss = []
-        elipschitz_model = []
-        val_eloss = []
-        val_eacc  = []
-        val_elipschitz_loss = []
-        val_elipschitz_model = []
-        time_e = 0
-        mean_acc = 0
-        mean_loss = 0 
-        mean_l_loss = 0
-        mean_l_model = 0
-        mean_val_acc = 0
-        mean_val_loss = 0 
-        mean_val_l_loss = 0
-        mean_val_l_model = 0
-        time_train = 0
-        time_val = 0
-        start = time.time()
-        # print(len(dataset))
-        for step,(inputs, labels) in enumerate(dataset):
-            # print(inputs.shape)
+        print("\nStart of epoch %d" % (epoch,))
+        start_time = time.time()
+        total_train = 0
+        loss_e_train = 0
+        loss_e_val = 0
+        l_train_fn = 0
+        l_train_model = 0
+        l_val_fn = 0
+        l_val_model = 0
+        l_t_step = 0
+        l_v_step = 0
+        # Iterate over the batches of the dataset.
+        for step, (x_batch_train, y_batch_train) in enumerate(dataset):
             with tf.GradientTape() as tape:
-                # forward pass 
-                output = model(inputs, training=True)
-                #compute loss
-                loss = loss_fn(labels, output)
-            #compute gradients over parameters
-            gradients = tape.gradient(loss, model.trainable_variables)
-            #update model's parameters 
-            optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-            predicted_labels = tf.argmax(output, axis=1)
-            y_true = tf.argmax(labels, axis = 1)
+                logits = model(x_batch_train, training=True)
+                loss_value = loss_fn(y_batch_train, logits)
+            grads = tape.gradient(loss_value, model.trainable_variables)
+            optimizer.apply_gradients(zip(grads, model.trainable_variables))
+            loss_e_train += loss_value
+            total_train +=1
+            predicted_labels = tf.argmax(logits, axis=1)
+            y_true = tf.argmax(y_batch_train, axis = 1)
             # Update training metric.
             train_acc_metric.update_state(y_true, predicted_labels)
-            # Display metrics at the end of each epoch.
-            train_acc = train_acc_metric.result()
-            # Reset training metrics at the end of each epoch
-            train_acc_metric.reset_states()
-            # Estimate the Lipschitz constant of the loss function periodically
-            
-            if step % estimate_interval == 0:
-                lipschitz_constant_loss_fn = estimate_lipschitz_constant_loss_fn(model, loss_fn, inputs, labels)
-                # print("\n")
-                # tf.print("Estimated Lipschitz constant of the loss function:", lipschitz_constant_loss_fn)
 
-            # Estimate the Lipschitz constant of the model periodically
-            if step % estimate_interval == 0:
-                lipschitz_constant_model = estimate_lipschitz_constant_model_v1(model,inputs)
-                # print("\n")
-                # tf.print("Estimated Lipschitz constant of the model:", lipschitz_constant_model)
-            time_train_batch = time.time() - start
-            eloss.append(loss)
-            eacc.append(train_acc)
-            elipschitz_loss.append(lipschitz_constant_loss_fn)
-            elipschitz_model.append(lipschitz_constant_model)
-            mean_acc += train_acc 
-            mean_loss +=loss 
-            mean_l_loss +=lipschitz_constant_loss_fn
-            mean_l_model += lipschitz_constant_model
-            time_train +=time_train_batch
-       
+            # Log every 200 batches.
+            if step % 10== 0:
+                print(
+                    "Training loss (for one batch) at step %d: %.4f"
+                    % (step, float(loss_value))
+                )
+                lipschitz_constant_loss_fn = estimate_lipschitz_constant_loss_fn(model, loss_fn, x_batch_train, y_batch_train)
+                lipschitz_constant_model = estimate_lipschitz_constant_model_v1(model,x_batch_train)
+                l_train_fn += lipschitz_constant_loss_fn
+                l_train_model += lipschitz_constant_model
+                l_t_step += 1
+                print(
+                    "Lipchitz constant loss (for one batch) at step %d: %.4f"
+                    % (step, float(lipschitz_constant_loss_fn))
+                )
+                print(
+                    "Lipchitz constant Model (for one batch) at step %d: %.4f"
+                    % (step, float(lipschitz_constant_model))
+                )
+                print("Seen so far: %d samples" % ((step + 1) * batch_size))
 
-        start2 = time.time()
-        #compute validaion results 
-        # print(len(val_dataset))
-        for step,(x_batch_val, y_batch_val) in enumerate(val_dataset):
-            # print(x_batch_val.shape)
-            val_out = model(x_batch_val, training=False)
-            #compute val loss
-            val_loss = loss_fn(val_out, y_batch_val)
-
-            #compute lipschitz constant loss function on valid set 
-            val_l_loss = estimate_lipschitz_constant_loss_fn(model, loss_fn, x_batch_val, y_batch_val)
-            #compute lipschittz constant model on valid set
-            val_l_model = estimate_lipschitz_constant_model_v1(model, x_batch_val)
-            # Update val metrics
-            predicted_labels_val = tf.argmax(val_out, axis=1)
-            y_true_val = tf.argmax(y_batch_val, axis = 1)
-            val_acc_metric.update_state(y_true_val, predicted_labels_val)
-            val_acc = val_acc_metric.result()
-            val_acc_metric.reset_states()
-            time_val_batch = time.time() - start2
-
-            val_eloss.append(val_loss)
-            val_eacc.append(val_acc)
-            val_elipschitz_loss.append(val_l_loss)
-            val_elipschitz_model.append(val_l_model)
-            # accuracy, loss = train_step(inputs, labels)
-            mean_val_acc +=val_acc
-            mean_val_loss +=val_loss
-            mean_val_l_loss  += val_l_loss 
-            mean_val_l_model += val_l_model
-            time_val += time_val_batch
+        # Display metrics at the end of each epoch.
+        train_acc = train_acc_metric.result()
+        print("Training acc over epoch: %.4f" % (float(train_acc),))
+        print("Training loss: %.4f" % (float(loss_e_train/total_train),))
+        print("Training Lipchitz_loss_fn: %.4f" % (float(l_train_fn/l_t_step),))
+        print("Training Lipchitz_model: %.4f" % (float(l_train_model/l_t_step),))
+        #log experiment runtime.
+        experiment.log_metric("Accuracy", float(train_acc), epoch=epoch)
+        experiment.log_metric("Loss", float(loss_e_train/total_train), epoch=epoch)
+        experiment.log_metric("L_Loss", float(l_train_fn/l_t_step), epoch=epoch)
+        experiment.log_metric("L_model", float(l_train_model/l_t_step), epoch=epoch)
         
+        
+        history["Loss"].append(float(loss_e_train/total_train))
+        history["Acc"].append(train_acc)
+        history["L_loss"].append(float(l_train_fn/l_t_step))
+        history["L_model"].append(float(l_train_model/l_t_step))
+        print("<============EVAL-TEST==============>")
+        # Reset training metrics at the end of each epoch
+        train_acc_metric.reset_states()
+        total_val = 0
+        # Run a validation loop at the end of each epoch.
+        for step, (x_batch_val, y_batch_val) in enumerate(val_dataset):
+            val_logits = model(x_batch_val, training=False)
+            loss_val = loss_fn(y_batch_val, val_logits)
+            if step % 10== 0:
+                print(
+                    "Valid loss (for one batch) at step %d: %.4f"
+                    % (step, float(loss_val))
+                )
+                lipschitz_constant_loss_fn_val = estimate_lipschitz_constant_loss_fn(model, loss_fn, x_batch_val, y_batch_val)
+                lipschitz_constant_model_val = estimate_lipschitz_constant_model_v1(model,x_batch_val)
+                print(
+                    "Lipchitz constant loss on validation set  (for one batch) at step %d: %.4f"
+                    % (step, float(lipschitz_constant_loss_fn_val))
+                )
+                print(
+                    "Lipchitz constant Model on validation set  (for one batch) at step %d: %.4f"
+                    % (step, float(lipschitz_constant_model_val))
+                )
+                l_val_fn += lipschitz_constant_loss_fn_val
+                l_val_model += lipschitz_constant_model_val
+                l_v_step += 1
+                print("Seen so far: %d samples" % ((step + 1) * batch_size))
 
-            # eloss.append(loss)
-            # eacc.append(train_acc)
-            # elipschitz_loss.append(lipschitz_constant_loss_fn)
-            # elipschitz_model.append(lipschitz_constant_model)
-            # #story validation result per epoch
-            # # val_eloss.append(val_loss)
-            # # val_eacc.append(val_acc)
-            # # val_elipschitz_loss.append(val_l_loss)
-            # # val_elipschitz_model.append(val_l_model)
-            # # accuracy, loss = train_step(inputs, labels)
-            # mean_acc += train_acc 
-            # mean_loss +=loss 
-            # mean_l_loss +=lipschitz_constant_loss_fn
-            # mean_l_model += lipschitz_constant_model
-            # mean_val_acc +=val_acc
-            # mean_val_loss +=val_loss
-            # mean_val_l_loss  += val_l_loss 
-            # mean_val_l_model += val_l_model
+            loss_e_val += loss_val
+            total_val +=1
+            # Update val metrics
+            predicted_labels = tf.argmax(val_logits, axis=1)
+            y_true = tf.argmax(y_batch_val, axis = 1)
+            val_acc_metric.update_state(y_true, predicted_labels)
+        val_acc = val_acc_metric.result()
+        val_acc_metric.reset_states()
+        print("Validation acc: %.4f" % (float(val_acc),))
+        print("Validation loss: %.4f" % (float(loss_e_val/total_val),))
+        print("Validation Lipchitz_loss_fn: %.4f" % (float(l_val_fn/l_v_step),))
+        print("Validation Lipchitz_model: %.4f" % (float(l_val_model/l_v_step),))
+        #log experiment runtime.
+        experiment.log_metric("Val Accuracy", float(val_acc), epoch=epoch)
+        experiment.log_metric("Val Loss", float(loss_e_val/total_val), epoch=epoch)
+        experiment.log_metric("Val L_Loss", float(l_val_fn/l_v_step), epoch=epoch)
+        experiment.log_metric("Val L_model", float(l_val_model/l_v_step), epoch=epoch, )
+        time_taken = time.time() - start_time
+        print("Time taken: %.2fs" % (time.time() - start_time))
+        print("=======================================================")
 
-        print(f"\rEpoch: {epoch}| Loss: {mean_loss/(len(dataset))} | Acc: {mean_acc/(len(dataset))} | Lipschitz Loss: {mean_l_loss/(len(dataset))}  | Lipschitz Model: {mean_l_model/(len(dataset))}|Time training: {time_train}| Val Loss: {mean_val_loss/(len(val_dataset))}| Val_Acc: {mean_val_acc/len(val_dataset)}| Val L_loss: {mean_val_l_loss/len(val_dataset)}| Val L_model: {mean_val_l_model/len(val_dataset)}| Time Val: {time_val}" , end=" ", flush=True)
+        history["Val_loss"].append(float(loss_e_val/total_val))
+        history["Val_acc"].append(val_acc)
+        history["Val_L_loss"].append(float(l_val_fn/l_v_step))
+        history["Val_L_model"].append(float(l_val_model/l_v_step))
+        history['Time'].append(time_taken)
+        if min_val_loss > float(loss_e_val/total_val):
+            bets_val = float(loss_e_val/total_val)
+            best_weights =  f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{ arg.sequence_length}/{arg.model_type}_{today}_best.keras"
+            os.makedirs(os.path.dirname(best_weights), exist_ok=True)
+            model.save(best_weights)
+            min_val_loss = float(loss_e_val/total_val)
 
-            # print(f"\rEpoch: {epoch}| Steps:{'-'*step}  | Loss: {loss} | Acc: {acc} | Lipschitz Loss: {lipschitz_constant_loss_fn}  | Lipschitz Model: {lipschitz_constant_model}" , end=" ", flush=True)
-        print("\n")
-        loss_model.append(eloss)
-        acc_model.append(eacc)
-        lipschitz_loss.append(elipschitz_loss)
-        lipschitz_model.append(elipschitz_model)
-        time_run_train.append(time_train)
-        val_loss_model.append(val_eloss)
-        val_acc_model.append(val_eacc)
-        val_lipschitz_loss.append(val_elipschitz_loss)
-        val_lipschitz_model.append(val_elipschitz_model)
-        time_run_val.append(time_val)
-        # history["Loss"] = np.array(loss_model).mean(axis=1)
-        # history["Acc"] = np.array(acc_model).mean(axis=1)
-        # history["L_loss"] = np.array(lipschitz_loss).mean(axis=1)
-        # history["L_model"] = np.array(lipschitz_model).mean(axis=1)
-        # history['Time_train'] = np.array(time_run_train)
-        # history["Val_loss"] = np.array(val_loss_model).mean(axis=1)
-        # history["Val_Acc"] = np.array(val_acc_model).mean(axis=1)
-        # history["Val_L_loss"] = np.array(val_lipschitz_loss).mean(axis=1)
-        # history["Val_L_model"] = np.array(val_lipschitz_model).mean(axis=1)
-        # history['Time_val'] = np.array(time_run_val)
-        history["Loss"].append(mean_loss/(len(dataset)))
-        history["Acc"].append(mean_acc/len(dataset))
-        history["L_loss"].append(mean_l_loss/len(dataset))
-        history["L_model"].append(mean_l_model/len(dataset))
-        history['Time_train'].append(time_train)
-        history["Val_loss"].append(mean_val_loss/len(val_dataset))
-        history["Val_Acc"].append(mean_val_acc/len(val_dataset))
-        history["Val_L_loss"].append(mean_val_l_loss/len(val_dataset))
-        history["Val_L_model"].append(mean_val_l_model/len(val_dataset))
-        history['Time_val'].append(time_val)
         if epoch%10 == 0:
-            filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,scenario, arg.model_type,epoch)
-            checkpoint_pth = f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{scenario}/{arg.model_type}_{epoch}.keras"
+            filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,arg.scenario, arg.model_type,epoch, today)
+            checkpoint_pth = f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{ arg.sequence_length}/{arg.model_type}_{epoch}.keras"
             os.makedirs(os.path.dirname(checkpoint_pth), exist_ok=True)
             os.makedirs(os.path.dirname(filename), exist_ok=True)
-            model.save(f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{scenario}/{arg.model_type}_{epoch}.keras")
-            with open("./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,scenario, arg.model_type,epoch), 'wb') as  f:
+            model.save(checkpoint_pth)
+            with open("./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,arg.scenario, arg.model_type,epoch, today), 'wb') as  f:
                 pickle.dump(history, f)
+                
     return history, model
-def test_model(dataset, model, loss_fn):
-    t_loss = []
-    t_acc  = []
-    t_l_loss = []
-    t_l_model = []
-    for x_batch, y_batch in dataset:
-        out = model(x_batch, training=False)
-        #compute val loss
-        loss = loss_fn(out, y_batch)
 
-        #compute lipschitz constant loss function on valid set 
-        l_loss = estimate_lipschitz_constant_loss_fn(model, loss_fn, x_batch, y_batch)
-        #compute lipschittz constant model on valid set
-        l_model = estimate_lipschitz_constant_model_v1(model, x_batch)
+
+
+from sklearn.metrics import classification_report, confusion_matrix
+
+def test_model(test_set, model, loss_fn,batch_size=512):
+    acc_metric.reset_states()
+    loss_e_test = 0
+    l_test_fn = 0
+    l_test_model = 0
+    total_test = 0
+    l_v_step  = 0
+    results = []
+    start_time = time.time()
+    y_true_total = []
+    y_pred_total = []
+    # Run a validation loop at the end of each epoch.
+    for step, (x_batch, y_batch) in enumerate(test_set):
+        test_logits = model(x_batch, training=False)
+        loss_test = loss_fn(y_batch, test_logits)
+        if step % 1== 0:
+            print(
+                "Test loss (for one batch) at step %d: %.4f"
+                % (step, float(loss_test))
+            )
+            lipschitz_constant_loss_fn_test = estimate_lipschitz_constant_loss_fn(model, loss_fn, x_batch, y_batch)
+            lipschitz_constant_model_test = estimate_lipschitz_constant_model_v1(model,x_batch)
+            print(
+                "Lipchitz constant loss on Test set  (for one batch) at step %d: %.4f"
+                % (step, float(lipschitz_constant_loss_fn_test))
+            )
+            print(
+                "Lipchitz constant Model on Test set  (for one batch) at step %d: %.4f"
+                % (step, float(lipschitz_constant_model_test))
+            )
+            l_test_fn += lipschitz_constant_loss_fn_test
+            l_test_model += lipschitz_constant_model_test
+            l_v_step += 1
+            print("Seen so far: %d samples" % ((step + 1) * batch_size))
+
+        loss_e_test += loss_test
+        total_test +=1
         # Update val metrics
-        predicted_labels = tf.argmax(out, axis=1)
+        predicted_labels = tf.argmax(test_logits, axis=1)
         y_true = tf.argmax(y_batch, axis = 1)
+        y_pred_total.append(predicted_labels)
+        y_true_total.append(y_true)
         acc_metric.update_state(y_true, predicted_labels)
-        acc = acc_metric.result()
-        acc_metric.reset_states()
-
-        t_loss.append(loss)
-        t_acc.append(acc)
-        t_l_loss.append(l_loss)
-        t_l_model.append(l_model)
+    acc = acc_metric.result()
+    acc_metric.reset_states()
+    print("=====================RESULT===============================")
+    print("Test acc: %.4f" % (float(acc),))
+    print("Test loss: %.4f" % (float(loss_e_test/total_test),))
+    print("Test Lipchitz_loss_fn: %.4f" % (float(l_test_fn/l_v_step),))
+    print("Test Lipchitz_model: %.4f" % (float(l_test_model/l_v_step),))
+    time_taken = time.time() - start_time
+    print("Time taken: %.2fs" % (time.time() - start_time))
+    print("=======================================================")
     
-    concated = np.concatenate([t_loss, t_acc, t_l_loss, t_l_model]).reshape(4, len(t_loss))
-    return concated.mean(axis = 1)
-
+    results.append((float(loss_e_test/total_test)))
+    results.append((float(acc)))
+    results.append((float(l_test_fn/l_v_step)))
+    results.append((float(l_test_model/l_v_step)))
+    results.append(time_taken)
+    
+    cl_report = classification_report(np.concatenate(y_pred_total, axis=0), np.concatenate(y_true_total, axis = 0))
+    cf_matrix = confusion_matrix(np.concatenate(y_pred_total, axis=0), np.concatenate(y_true_total, axis = 0))
+    return  cl_report, cf_matrix, results
+    # print(f"Result on {name}'s data: ", results)
+    # metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
+    # history["test"][name[:-4]] = dict()
+    # for metric, result in zip(metrics, results):
+    #     history["test"][name[:-4]][metric] = result
