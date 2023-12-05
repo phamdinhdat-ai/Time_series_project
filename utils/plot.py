@@ -25,7 +25,7 @@ def plot_performance(history, model_type, arg=None):
 
     #plot loss model
     # plt.plot(train_val_loss)
-    img_paths = f"./result_images/plot_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{scenario}_{today}"
+    img_paths = f"./result_images/plot_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{scenario}_{today}/"
     os.makedirs(os.path.dirname(img_paths), exist_ok=True)
     plt.plot(loss)
     plt.plot(val_loss)
