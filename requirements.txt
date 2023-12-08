@@ -1,6 +1,6 @@
 tensorflow
 scikit-learn
-numpy==1.22.0
+numpy
 matplotlib 
 comet_ml 
 pandas 
