@@ -56,7 +56,7 @@ class LSTM_baseline(keras.Model):
                 x = h_state
         x = layers.Dropout(self.dropout)(x)
         # x = layers.Flatten()(x)
-        out = layers.Dense(self.n_classes, activation='log_softmax')(x)
+        out = layers.Dense(self.n_classes, activation='softmax')(x)
         model = Model(inputs = input, outputs = out)
 
         return model 
