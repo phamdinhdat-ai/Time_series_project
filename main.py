@@ -131,7 +131,7 @@ else:
         ds_test = tf.data.Dataset.from_tensor_slices((X_test, y_test))
         ds_test = ds_test.batch(BATCH_SIZE)
         cl_report, cf_matrix,results = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
-        print(f"Result on {name}'s data: ", results)
+        print(f"Result on {name}'s data: \n", results)
         metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
         history["test"][name[:-4]] = dict()
         history["test"][name[:-4]]['cl_report'] = cl_report
@@ -145,21 +145,22 @@ else:
 # checkpoint_pth = f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras"
 # os.makedirs(os.path.dirname(checkpoint_pth), exist_ok=True)
 # model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
-print(history)
-# import numpy as np
-# arr  = np.zeros((4, 4))
+# print(history)
+import numpy as np
+arr  = np.zeros((4, 4))
 
-# for i, (person, metrics) in enumerate(history["test"].items()):
-#   print(person, metrics)
-#   arr[i][0]  = metrics["Loss"]
-#   arr[i][1] = metrics["Acc"]
-#   arr[i][2] = metrics["Lipschitz Loss"]
-#   arr[i][3] = metrics["Lipshitz model"]
+for i, (person, metrics) in enumerate(history["test"].items()):
+  print(person, metrics)
+  arr[i][0]  = metrics["Loss"]
+  arr[i][1] = metrics["Acc"]
+  arr[i][2] = metrics["Lipschitz Loss"]
+  arr[i][3] = metrics["Lipshitz model"]
 
 
-
-# history['test']['mean'] = np.mean(arr, axis = 0 )
-# history['test']['std'] = np.std(arr, axis = 0)
+print("mean_exp", np.mean(arr, axis = 0 ))
+print("std_exp", np.std(arr, axis = 0))
+history['test']['mean'] = np.mean(arr, axis = 0 )
+history['test']['std'] = np.std(arr, axis = 0)
 
 filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario, today)
 os.makedirs(os.path.dirname(filename), exist_ok=True)
