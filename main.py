@@ -60,7 +60,16 @@ if model_type == 'mlp':
     model_mlp = MLP(config=config)
     model = model_mlp.build()
     print(model.summary())
-
+    
+if model_type == 'baseline':
+    from model.lstm_baseline import LSTM_baseline
+    from config.lstm_baseline import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    model_baseline = LSTM_baseline(config=config)
+    model = model_baseline.build()
+    print(model.summary())
 
 else: 
     from model.lstm import LSTM
