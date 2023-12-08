@@ -173,8 +173,8 @@ for i, (person, metrics) in enumerate(history["test"].items()):
   persons.append(person)
 
 
-mean = np.mean(arr, axis = 0 )
-std = np.std(arr, axis = 0)
+mean = np.mean(arr, axis = 0 ).reshape(1, 4)
+std =  np.std(arr, axis = 0).reshape(1,4)
 print("mean_exp", mean)
 print("std_exp", std)
 persons.append("Mean")
