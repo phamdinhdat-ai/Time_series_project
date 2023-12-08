@@ -163,19 +163,36 @@ else:
 # print(history)
 import numpy as np
 arr  = np.zeros((4, 4))
-
+persons = []
 for i, (person, metrics) in enumerate(history["test"].items()):
   print(person, metrics)
   arr[i][0]  = metrics["Loss"]
   arr[i][1] = metrics["Acc"]
   arr[i][2] = metrics["Lipschitz Loss"]
   arr[i][3] = metrics["Lipshitz model"]
+  persons.append(person)
 
 
-print("mean_exp", np.mean(arr, axis = 0 ))
-print("std_exp", np.std(arr, axis = 0))
-history['test']['mean'] = np.mean(arr, axis = 0 )
-history['test']['std'] = np.std(arr, axis = 0)
+mean = np.mean(arr, axis = 0 )
+std = np.std(arr, axis = 0)
+print("mean_exp", mean)
+print("std_exp", std)
+persons.append("Mean")
+persons.append("Standard Deviation")
+df_np = np.concatenate([arr, mean, std], axis = 0 )
+cols = ["Person", "Loss", "Acc", "L Loss", "L model"]
+df_dict = dict()
+df_dict["Person"] = persons
+for i in range(4):
+  df_dict[cols[i+1]] = df_np[:, i]
+
+# save test history on excel file
+file_excel = "./work_dir/hist_{}_{}_{}_{}_{}/test_history_{}_{}_{}_{}.xlsx".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario, today)
+os.makedirs(os.path.dirname(file_excel), exist_ok=True)
+df = pd.DataFrame(df_dict, columns=cols)
+df.to_excel(file_excel)
+
+
 
 filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario, today)
 os.makedirs(os.path.dirname(filename), exist_ok=True)
