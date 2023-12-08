@@ -9,6 +9,7 @@ from utils.load_data import load_and_process_data, tensorflow_dataset, load_from
 from utils.parse import parse_opt
 from utils.plot import plot_performance
 from utils.trainer import train_model
+from utils.losses import negative_log_likelihood
 from utils.trainer import test_model
 from datetime import date
 import keras
@@ -28,6 +29,11 @@ EPOCHS = opt.epochs
 
 model_type = opt.model_type
 data_type = opt.data_type
+
+#set up training
+
+loss_fn = tf.keras.losses.CategoricalCrossentropy()
+optimizer = tf.keras.optimizers.Adam()
 if model_type == "lstm":
     from model.lstm import LSTM
     from config.lstm import Config
@@ -64,6 +70,8 @@ if model_type == 'mlp':
 if model_type == 'baseline':
     from model.lstm_baseline import LSTM_baseline
     from config.lstm_baseline import Config
+    
+    loss_fn = negative_log_likelihood
     config  = Config
     config.n_classes = opt.num_classes
     config.timestep  = opt.sequence_length
@@ -106,8 +114,6 @@ val_dataset = val_dataset.batch(BATCH_SIZE)
 
 print("===Load data passed====")
 #set up training
-
-loss_fn = tf.keras.losses.CategoricalCrossentropy()
 #set up optimizer  chosen by implement in configure
 optimizer = tf.keras.optimizers.Adam()
 # training progress
