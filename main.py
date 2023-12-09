@@ -13,6 +13,7 @@ from utils.trainer import train_model
 from utils.losses import negative_log_likelihood
 from utils.trainer import test_model
 from datetime import date
+from utils.trainer import experiment
 import keras
 print(tf.__version__)
 
@@ -79,6 +80,17 @@ if model_type == 'baseline':
     model_baseline = LSTM_baseline(config=config)
     model = model_baseline.build()
     print(model.summary())
+    
+    
+if model_type == 'lstm_v2':
+    from model.lstm_v2 import LSTM_v2
+    from config.lstm import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    model_v2 = LSTM_v2(config=config)
+    model = model_v2.build()
+    print(model.summary())
 
 else: 
     from model.lstm import LSTM
@@ -135,8 +147,14 @@ if opt.scenario is not None:
     metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
     history["test"]['cl_report'] = cl_report
     history["test"]['cf_matrix'] = cf_matrix
+    experiment.log_confusion_matrix(
+                cm=cf_matrix,
+                title="Confusion Matrix: Evaluation",
+                file_name="confusion-matrix-eval.json",)       
     for metric, result in zip(metrics, results):
         history["test"][metric] = result
+        
+    
 else:
     for file in os.listdir(test_path):  
         scenario = 'person_divide'
@@ -152,7 +170,10 @@ else:
         history["test"][name[:-4]] = dict()
         history["test"][name[:-4]]['cl_report'] = cl_report
         history["test"][name[:-4]]['cf_matrix'] = cf_matrix
-        
+        experiment.log_confusion_matrix(
+                cm=cf_matrix,
+                title=f"Confusion Matrix: Evaluation on {name[:-4]}",
+                file_name=f"confusion-matrix-eval_{name[:-4]}.json",)    
         for metric, result in zip(metrics, results):
             history["test"][name[:-4]][metric] = result
             
