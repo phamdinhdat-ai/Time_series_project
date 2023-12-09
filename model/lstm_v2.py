@@ -11,7 +11,7 @@ import pickle
 from .batchnorm import BatchNorm
 class LSTM_v2(keras.Model):
     def __init__(self, config):
-        super(LSTM, self).__init__()
+        super(LSTM_v2, self).__init__()
         self.config = config
         self.timestep = self.config.timestep
         self.n_features = self.config.n_features
