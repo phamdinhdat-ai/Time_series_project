@@ -9,7 +9,7 @@ class Config:
     log_dir = "checkpoint/lstm/"
     save_file =  "checkpoint/lstm_model/"
     activation = 'tanh'
-    regularizers = 'l1'
+    regularizers = None
     normalizer = 'batch_norm'
     lr  = 0.01,
     optimizer = 'adam',
