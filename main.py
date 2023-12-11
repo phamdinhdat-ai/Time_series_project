@@ -33,9 +33,13 @@ model_type = opt.model_type
 data_type = opt.data_type
 
 #set up training
-
-loss_fn = tf.keras.losses.CategoricalCrossentropy()
 optimizer = tf.keras.optimizers.Adam()
+if lossfn_str =='ce':
+  loss_fn = tf.keras.losses.CategoricalCrossentropy()
+elif lossfn_str =='nll':
+  loss_fn = negative_log_likelihood
+else:
+  loss_fn = tf.keras.losses.CategoricalCrossentropy()
 if model_type == "lstm":
     from model.lstm import LSTM
     from config.lstm import Config
