@@ -31,7 +31,7 @@ EPOCHS = opt.epochs
 
 model_type = opt.model_type
 data_type = opt.data_type
-
+lossfn_str = opt.loss_fn
 #set up training
 optimizer = tf.keras.optimizers.Adam()
 if lossfn_str =='ce':
