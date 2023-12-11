@@ -20,9 +20,12 @@ Firstly, you need to create an account in [Comet ML](https://www.comet.com/site)
 ```
 
 - with Scenario 1:
+
+  - Our lstm model:
+  `python main.py --model_type lstm --data_type static --scenario sample_divide --num_classes 12 --epochs 10 --sequence_length 20 --overlap 0.8 --batch_size 512 --normalizer batch_norm` --loss_fn nll
   
-  `python main.py --model_type lstm --data_type static --scenario sample_divide --num_classes 12 --epochs 10 --sequence_length 20 --overlap 0.8 --batch_size 512 --normalizer batch_norm`
 
 - with Scenario 2:
-  
-  `python main.py --model_type lstm --data_type static --num_classes 12 --epochs 10 --sequence_length 20 --overlap 0.8 --batch_size 512 --normalizer batch_norm`
+
+  - Baseline model:
+  `python main.py --model_type lstm --data_type static --num_classes 12 --epochs 10 --sequence_length 20 --overlap 0.8 --batch_size 512 --normalizer batch_norm` --loss_fn nll 
