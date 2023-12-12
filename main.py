@@ -23,7 +23,7 @@ today = str(date.today())
 
 train_folder = 'data/new_data_static/trainset'
 test_path = 'data/new_data_static/testset'
-
+test_neck_path = 'data/necktest'
 opt = parse_opt(True)
 
 BATCH_SIZE = opt.batch_size
@@ -174,14 +174,32 @@ else:
         history["test"][name[:-4]] = dict()
         history["test"][name[:-4]]['cl_report'] = cl_report
         history["test"][name[:-4]]['cf_matrix'] = cf_matrix
-        experiment.log_confusion_matrix(
-                cm=cf_matrix,
-                title=f"Confusion Matrix: Evaluation on {name[:-4]}",
-                file_name=f"confusion-matrix-eval_{name[:-4]}.json",)    
+        # experiment.log_confusion_matrix(
+        #         cm=cf_matrix,
+        #         title=f"Confusion Matrix: Evaluation on {name[:-4]}",
+        #         file_name=f"confusion-matrix-eval_{name[:-4]}.json",)    
         for metric, result in zip(metrics, results):
             history["test"][name[:-4]][metric] = result
             
-            
+    history["test_neck"] = dict()
+    for file in os.listdir(test_neck_path):  
+        scenario = 'person_divide'
+        name = file.split("_")[-1]
+        print(f"<=======>Test on {name[:-4]}'s data<=======>\n")
+        file_dir = f"{test_neck_path}/{file}"
+        X_test, y_test = load_and_process_data(file_path=file_dir,sequence_length= opt.sequence_length, overlap = opt.overlap, valid_ratio=None)
+        ds_test = tf.data.Dataset.from_tensor_slices((X_test, y_test))
+        ds_test = ds_test.batch(BATCH_SIZE)
+        cl_report, cf_matrix,results = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
+        print(f"Result on {name}'s data(neckdata): \n", results)
+        metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
+        history["test_neck"][name[:-4]] = dict()
+        history["test_neck"][name[:-4]]['cl_report'] = cl_report
+        history["test_neck"][name[:-4]]['cf_matrix'] = cf_matrix
+        experiment.log_confusion_matrix(
+                cm=cf_matrix)    
+        for metric, result in zip(metrics, results):
+            history["test_neck"][name[:-4]][metric] = result
 
 # checkpoint_pth = f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras"
 # os.makedirs(os.path.dirname(checkpoint_pth), exist_ok=True)
