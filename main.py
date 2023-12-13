@@ -77,7 +77,6 @@ if model_type == 'baseline':
     from model.lstm_baseline import LSTM_baseline
     from config.lstm_baseline import Config
     
-    loss_fn = negative_log_likelihood
     config  = Config
     config.n_classes = opt.num_classes
     config.timestep  = opt.sequence_length
