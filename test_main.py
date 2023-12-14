@@ -129,7 +129,7 @@ if opt.check_point is not None:
 
 #load data
 print("<=====> Training progress <=====>")
-if opt.scenario is not None:
+if opt.scenario == "sample_divide":
     print("Combine all data of 16 person and split with ratio at 0.75-0.25 (12-4) for train/test")
     X_train, X_val, y_train, y_val = load_and_process_data(file_path='./data/dataset/trainset_16.npy', sequence_length=config.timestep, overlap=opt.overlap, valid_ratio=0.2)
 else:
@@ -212,8 +212,8 @@ else:
         history["test_neck"][name[:-4]] = dict()
         history["test_neck"][name[:-4]]['cl_report'] = cl_report
         history["test_neck"][name[:-4]]['cf_matrix'] = cf_matrix
-        experiment.log_confusion_matrix(
-                cm=cf_matrix)    
+        # experiment.log_confusion_matrix(
+        #         cm=cf_matrix)    
         for metric, result in zip(metrics, results):
             history["test_neck"][name[:-4]][metric] = result
 
