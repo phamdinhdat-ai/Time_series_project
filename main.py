@@ -62,6 +62,9 @@ if model_type =='cnn':
     config = Config
     config.n_classes = opt.num_classes 
     config.timestep = opt.sequence_length
+    config.kernel_size = opt.kernel_size 
+    # config.filters = opt.filters
+    config.normalizer = opt.normalizer
     model_cnn = CNN(config=config)
     model = model_cnn.build()
     print(model.summary())
