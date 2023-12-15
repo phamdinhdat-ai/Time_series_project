@@ -246,11 +246,38 @@ df_dict["Person"] = persons
 for i in range(4):
   df_dict[cols[i+1]] = df_np[:, i]
 
+
 # save test history on excel file
-file_excel = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_history_{}_{}_{}_{}_{}_{}.xlsx".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+file_excel = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_history_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
 os.makedirs(os.path.dirname(file_excel), exist_ok=True)
 df = pd.DataFrame(df_dict, columns=cols)
-df.to_excel(file_excel)
+df.to_csv(file_excel)
+
+
+
+
+import numpy as np
+arr_neck  = np.zeros((2, 4))
+persons_neck = []
+for i, (person, metrics) in enumerate(history["test_neck"].items()):
+  print(person, metrics)
+  arr_neck[i][0]  = metrics["Loss"]
+  arr_neck[i][1] = metrics["Acc"]
+  arr_neck[i][2] = metrics["Lipschitz Loss"]
+  arr_neck[i][3] = metrics["Lipshitz model"]
+  persons_neck.append(person)
+  
+print(arr_neck)
+df_neck = dict()
+df_neck['Person'] = persons_neck
+for i in range(4):
+  df_neck[cols[i+1]] = arr_neck[:, i]
+  
+  
+file_excel_neck = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_neck_history_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+os.makedirs(os.path.dirname(file_excel_neck), exist_ok=True)
+df_neck_data = pd.DataFrame(df_neck, columns=cols)
+df_neck_data.to_csv(file_excel_neck)
 
 
 
