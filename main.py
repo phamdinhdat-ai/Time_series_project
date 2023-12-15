@@ -3,6 +3,8 @@ import os
 import pandas as pd 
 import tensorflow as tf
 from model.lstm import LSTM
+from model.adaptive_lstm import AdaptiveLSTM
+from config.lstm import Config 
 from config.lstm import Config
 # from utils.trainer import train_model
 from utils.load_data import load_and_process_data, tensorflow_dataset, load_from_folder
@@ -85,6 +87,21 @@ if model_type == 'baseline':
     print(model.summary())
     
     
+if model_type == 'adaptive_lstm':
+    from model.adaptive_lstm import AdaptiveLSTM
+    from config.adaptive_lstm import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    config.filters = opt.filters
+    config.kernel_size = opt.kernel_size
+    config.normalizer = opt.normalizer
+    model_adaptive = AdaptiveLSTM(config=config)
+    model = model_adaptive.build()
+    print(model.summary())
+    
+    
+    
 if model_type == 'lstm_v2':
     from model.lstm_v2 import LSTM_v2
     from config.lstm import Config
@@ -94,19 +111,6 @@ if model_type == 'lstm_v2':
     model_v2 = LSTM_v2(config=config)
     model = model_v2.build()
     print(model.summary())
-    
-# if model_type == 'adaptive_lstm':
-#     from model.adaptive_lstm import AdaptiveLSTM
-#     from config.adaptive_lstm import Config
-#     config  = Config
-#     config.n_classes = opt.num_classes
-#     config.timestep  = opt.sequence_length
-#     config.filters = opt.filters
-#     config.kernel_size = opt.kernel_size
-#     model_adaptive = AdaptiveLSTM(config=config)
-#     model = model_adaptive.build()
-#     print(model.summary())
-    
 
 else: 
     from model.lstm import LSTM
@@ -125,7 +129,7 @@ if opt.check_point is not None:
 
 #load data
 print("<=====> Training progress <=====>")
-if opt.scenario is not None:
+if opt.scenario == "sample_divide":
     print("Combine all data of 16 person and split with ratio at 0.75-0.25 (12-4) for train/test")
     X_train, X_val, y_train, y_val = load_and_process_data(file_path='./data/dataset/trainset_16.npy', sequence_length=config.timestep, overlap=opt.overlap, valid_ratio=0.2)
 else:
@@ -152,7 +156,7 @@ print("=====Training Done !====")
 history["test"]  = dict()
 #test progress
 
-if opt.scenario is not None:
+if opt.scenario == "sample_divide":
     scenario = opt.scenario
     print("<====== Evaluate on testset =======>")
     X_test, y_test = load_and_process_data(file_path='./data/dataset/testset_16.npy',sequence_length= opt.sequence_length, overlap = opt.overlap, valid_ratio=None)
@@ -208,8 +212,8 @@ else:
         history["test_neck"][name[:-4]] = dict()
         history["test_neck"][name[:-4]]['cl_report'] = cl_report
         history["test_neck"][name[:-4]]['cf_matrix'] = cf_matrix
-        experiment.log_confusion_matrix(
-                cm=cf_matrix)    
+        # experiment.log_confusion_matrix(
+        #         cm=cf_matrix)    
         for metric, result in zip(metrics, results):
             history["test_neck"][name[:-4]][metric] = result
 
@@ -243,14 +247,14 @@ for i in range(4):
   df_dict[cols[i+1]] = df_np[:, i]
 
 # save test history on excel file
-file_excel = "./work_dir/hist_{}_{}_{}_{}_{}/test_history_{}_{}_{}_{}.xlsx".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario, today)
+file_excel = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_history_{}_{}_{}_{}_{}_{}.xlsx".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
 os.makedirs(os.path.dirname(file_excel), exist_ok=True)
 df = pd.DataFrame(df_dict, columns=cols)
 df.to_excel(file_excel)
 
 
 
-filename = "./work_dir/hist_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario, EPOCHS, BATCH_SIZE,  scenario, today)
+filename = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
 os.makedirs(os.path.dirname(filename), exist_ok=True)
 with open(filename, 'wb') as  f:
     pickle.dump(history, f)
@@ -260,3 +264,10 @@ plot_performance(history=history, model_type=model_type, arg=opt)
 
 if __name__ == "__main__":
     opt = parse_opt(True)
+
+
+# from config.adaptive_lstm import Config
+# from model.adaptive_lstm import AdaptiveLSTM
+# model = AdaptiveLSTM(config=Config)
+# model = model.build()
+# print(model.summary())
