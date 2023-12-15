@@ -94,6 +94,19 @@ if model_type == 'lstm_v2':
     model_v2 = LSTM_v2(config=config)
     model = model_v2.build()
     print(model.summary())
+    
+# if model_type == 'adaptive_lstm':
+#     from model.adaptive_lstm import AdaptiveLSTM
+#     from config.adaptive_lstm import Config
+#     config  = Config
+#     config.n_classes = opt.num_classes
+#     config.timestep  = opt.sequence_length
+#     config.filters = opt.filters
+#     config.kernel_size = opt.kernel_size
+#     model_adaptive = AdaptiveLSTM(config=config)
+#     model = model_adaptive.build()
+#     print(model.summary())
+    
 
 else: 
     from model.lstm import LSTM
