@@ -33,12 +33,13 @@ class CNN(keras.Model):
         self.optimizer = self.config.optimizer
         self.loss_fn = self.config.loss_fn
 
-        if self.config.normalizer == "batch norm":
+       
+        if self.config.normalizer == "batch_norm":
             self.normalizer = layers.BatchNormalization()
-        elif self.config.normalizer == "layer norm":
+        elif self.config.normalizer == "layer_norm":
             self.normalizer = layers.LayerNormalization()
         else:
-            self.normalizer = BatchNorm()
+            self.normalizer = None
 
 
         if self.config.regularizers == 'l1':
@@ -54,13 +55,20 @@ class CNN(keras.Model):
         inputs = keras.Input(shape=(self.timestep,self.n_features))
         x = inputs
         for filter in self.filters:
-            x =layers.Conv1D(filters=filter, kernel_size=1, activation='relu', kernel_regularizer=self.regularizers)(x)
-            x = self.normalizer(x)
+            x =layers.Conv1D(filters=filter, kernel_size=self.kernel_size, activation='relu', kernel_regularizer=self.regularizers)(x)
+            if self.normalizer == "batch_norm":
+                x = layers.BatchNormalization()(x)
+            else:
+                pass
+            # x = layers.Dropout(self.dropout)(x)
         x = layers.Flatten()(x)
 
         for unit in self.mlp_units:
             x = layers.Dense(unit, activation = 'tanh', kernel_regularizer=self.regularizers)(x)
-            x = self.normalizer(x)
+            if self.normalizer == "batch_norm":
+                x = layers.BatchNormalization()(x)
+            else:
+                pass
             x = layers.Dropout(self.dropout)(x)
 
         outs = layers.Dense(self.n_classes, activation = "softmax")(x)
