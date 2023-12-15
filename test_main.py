@@ -254,7 +254,7 @@ df.to_excel(file_excel)
 
 
 
-filename = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}_()_().pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+filename = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
 os.makedirs(os.path.dirname(filename), exist_ok=True)
 with open(filename, 'wb') as  f:
     pickle.dump(history, f)
