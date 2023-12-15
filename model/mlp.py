@@ -27,11 +27,12 @@ class MLP(object):
         self.optimizer = self.config.optimizer
         self.loss_fn = self.config.loss_fn
 
-
-        if self.config.normalizer == "batch norm":
+        if self.config.normalizer == "batch_norm":
             self.normalizer = layers.BatchNormalization()
-        else: 
+        elif self.config.normalizer == "layer_norm":
             self.normalizer = layers.LayerNormalization()
+        else:
+            self.normalizer = None
         
 
 
@@ -51,7 +52,10 @@ class MLP(object):
         x = layers.Flatten()(x)
         for unit in self.mlp_units:
             x = layers.Dense(unit, activation = 'tanh')(x)
-            # x = self.normalizer(x)
+            if self.normalizer == "batch_norm":
+                x = layers.BatchNormalization()(x)
+            else:
+                pass
             x = layers.Dropout(self.dropout)(x)
         # x = layers.Flatten()(x)
         outs = layers.Dense(self.n_classes, activation = "softmax")(x)
@@ -123,24 +127,3 @@ class MLP(object):
     #     return result, y_pred
 
 # from config.mlp import Config
-
-
-class Config:
-    timestep  = 20
-    n_features = 3
-    n_classes  = 12
-    mlp_units  = [64, 32]
-    dropout = 0.4 
-    log_dir = "checkpoint/lstm/"
-    save_file =  "checkpoint/lstm_model/"
-    activation = 'tanh'
-    regularizers = 'l1'
-    normalizer = 'batch norm'
-    lr  = 0.01,
-    optimizer = 'adam',
-    loss_fn = 'categorical-crossentropy'
-
-
-model = MLP(config=Config)
-model = model.build()
-print(model.summary())
