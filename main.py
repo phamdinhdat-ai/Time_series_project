@@ -172,7 +172,25 @@ if opt.scenario == "sample_divide":
     history["test"]['cf_matrix'] = cf_matrix      
     for metric, result in zip(metrics, results):
         history["test"][metric] = result
+
+
+    cols = ["Person", "Loss", "Acc", "L Loss", "L model"]
         
+    df_total = dict()
+    df_total['Person'] = "Eval All"
+    for i in range(4):
+        df_total[cols[i+1]] = [results[i]]
+      
+      
+    file_excel_total = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_total_history_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+      
+    # file_excel_total = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_history_eval_total_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+    os.makedirs(os.path.dirname(file_excel_total), exist_ok=True)
+    df = pd.DataFrame(df_total, columns=cols)
+    df.to_csv(file_excel_total)
+    print("test_done!!!!!")
+
+  
     history["test_neck"] = dict()
     for file in os.listdir(test_neck_path):  
         name = file.split("_")[-1]
@@ -181,32 +199,18 @@ if opt.scenario == "sample_divide":
         X_test, y_test = load_and_process_data(file_path=file_dir,sequence_length= opt.sequence_length, overlap = opt.overlap, valid_ratio=None)
         ds_test = tf.data.Dataset.from_tensor_slices((X_test, y_test))
         ds_test = ds_test.batch(BATCH_SIZE)
-        cl_report, cf_matrix,results = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
-        print(f"Result on {name}'s data(neckdata): \n", results)
+        cl_report, cf_matrix,results_neck = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
+        print(f"Result on {name}'s data(neckdata): \n", results_neck)
         metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
         history["test_neck"][name[:-4]] = dict()
         history["test_neck"][name[:-4]]['cl_report'] = cl_report
         history["test_neck"][name[:-4]]['cf_matrix'] = cf_matrix
         # experiment.log_confusion_matrix(
         #         cm=cf_matrix)    
-        for metric, result in zip(metrics, results):
+        for metric, result in zip(metrics, results_neck):
             history["test_neck"][name[:-4]][metric] = result
             
-        cols = ["Person", "Loss", "Acc", "L Loss", "L model"]
         
-        df_total = dict()
-        df_total['Person'] = "Eval All"
-        for i in range(4):
-            df_total[cols[i+1]] = [results[i]]
-          
-          
-        file_excel_total = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_total_history_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
-          
-        # file_excel_total = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_history_eval_total_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
-        os.makedirs(os.path.dirname(file_excel_total), exist_ok=True)
-        df = pd.DataFrame(df_total, columns=cols)
-        df.to_csv(file_excel_total)
-        print("test_done!!!!!")
         
 else:
     for file in os.listdir(test_path):  
