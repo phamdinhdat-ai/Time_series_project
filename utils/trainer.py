@@ -207,8 +207,8 @@ def train_model(model,
         #     model.save(checkpoint_pth)
         #     with open("./work_dir/hist_{}_{}_{}_{}_{}/last_training_history_{}_{}_{}_{}_{}.pkl".format(arg.model_type, arg.data_type, arg.sequence_length, arg.overlap,arg.scenario, arg.model_type,epoch, today, arg.loss_fn, arg.normalizer), 'wb') as  f:
         #         pickle.dump(history, f)
-                
-    return history, model
+    best_model = keras.models.load_model(best_weights)          
+    return history, best_model
 
 
 
