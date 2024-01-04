@@ -40,6 +40,12 @@ if lossfn_str =='ce':
   loss_fn = tf.keras.losses.CategoricalCrossentropy()
 elif lossfn_str =='nll':
   loss_fn = negative_log_likelihood
+elif lossfn_str == 'cfe':
+    loss_fn = tf.keras.losses.CategoricalFocalCrossentropy()
+elif lossfn_str == 'kl':
+    loss_fn = tf.keras.losses.KLDivergence()
+elif lossfn_str == 'ch':
+    loss_fn = tf.keras.losses.CategoricalHinge()
 else:
   loss_fn = tf.keras.losses.CategoricalCrossentropy()
 if model_type == "lstm":
@@ -332,8 +338,3 @@ if __name__ == "__main__":
     opt = parse_opt(True)
 
 
-# from config.adaptive_lstm import Config
-# from model.adaptive_lstm import AdaptiveLSTM
-# model = AdaptiveLSTM(config=Config)
-# model = model.build()
-# print(model.summary())
