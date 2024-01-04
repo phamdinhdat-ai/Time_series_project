@@ -7,6 +7,8 @@ experiment = Experiment(
   workspace="datphamai"
 )
 import tensorflow as tf 
+import tensorflow_addons as tfa
+
 from config.base_config import BaseConfig
 from config.lstm import Config
 from model.lstm import LSTM
@@ -48,10 +50,11 @@ if BaseConfig.loss_fn == 'mae':
 acc_metric = keras.metrics.Accuracy()
 train_acc_metric = keras.metrics.Accuracy()
 val_acc_metric = keras.metrics.Accuracy()
+from sklearn.metrics import f1_score
 
-
-
-
+f1_metric =  tfa.metrics.F1Score(num_classes=12, threshold=0.5)
+f1_train =  tfa.metrics.F1Score(num_classes=12, threshold=0.5)
+f1_val =  tfa.metrics.F1Score(num_classes=12, threshold=0.5)
 def train_model(model,
                 dataset,
                 loss_fn,
@@ -64,10 +67,12 @@ def train_model(model,
     history = dict(
         Loss = [],
         Acc = [],
+        F1_score = [],
         L_loss = [],
         L_model = [],
         Val_loss = [],
         Val_acc = [],
+        Val_f1_score = [],
         Val_L_loss = [],
         Val_L_model = [],
         Time = [],
@@ -78,6 +83,11 @@ def train_model(model,
         print("\nStart of epoch %d" % (epoch,))
         start_time = time.time()
         total_train = 0
+        acc_e_train = 0
+        acc_e_val = 0
+        f1_e_train = 0
+        f1_e_val = 0
+        
         loss_e_train = 0
         loss_e_val = 0
         l_train_fn = 0
@@ -99,7 +109,8 @@ def train_model(model,
             y_true = tf.argmax(y_batch_train, axis = 1)
             # Update training metric.
             train_acc_metric.update_state(y_true, predicted_labels)
-
+            f1_train.update_state(y_batch_train, logits)
+            
             # Log every 200 batches.
             if step % 10== 0:
                 print(
@@ -122,25 +133,35 @@ def train_model(model,
                 print("Seen so far: %d samples" % ((step + 1) * batch_size))
 
         # Display metrics at the end of each epoch.
-        train_acc = train_acc_metric.result()
-        print("Training acc over epoch: %.4f" % (float(train_acc),))
+            f1_s_train = f1_score(y_true=y_true, y_pred=predicted_labels, average='macro')
+            train_acc = train_acc_metric.result()
+            acc_e_train +=train_acc
+            f1_e_train += f1_s_train
+            
+        print("Training acc over epoch: %.4f" % (float(acc_e_train/total_train),))
         print("Training loss: %.4f" % (float(loss_e_train/total_train),))
         print("Training Lipchitz_loss_fn: %.4f" % (float(l_train_fn/l_t_step),))
         print("Training Lipchitz_model: %.4f" % (float(l_train_model/l_t_step),))
+        print("Training f1-score: %.4f" % (float(f1_e_train/total_train),))
+        
         #log experiment runtime.
-        experiment.log_metric("Accuracy", float(train_acc), epoch=epoch)
+        experiment.log_metric("Accuracy", float(acc_e_train/total_train), epoch=epoch)
         experiment.log_metric("Loss", float(loss_e_train/total_train), epoch=epoch)
         experiment.log_metric("L_Loss", float(l_train_fn/l_t_step), epoch=epoch)
         experiment.log_metric("L_model", float(l_train_model/l_t_step), epoch=epoch)
+        experiment.log_metric("f1-score", float(f1_e_train/total_train), epoch=epoch)
+        
         
         
         history["Loss"].append(float(loss_e_train/total_train))
-        history["Acc"].append(train_acc)
+        history["Acc"].append( float(acc_e_train/total_train))
+        history["F1_score"].append(float(f1_e_train/total_train))
         history["L_loss"].append(float(l_train_fn/l_t_step))
         history["L_model"].append(float(l_train_model/l_t_step))
         print("<============EVAL-TEST==============>")
         # Reset training metrics at the end of each epoch
         train_acc_metric.reset_states()
+        f1_train.reset_states()
         total_val = 0
         # Run a validation loop at the end of each epoch.
         for step, (x_batch_val, y_batch_val) in enumerate(val_dataset):
@@ -169,18 +190,27 @@ def train_model(model,
             loss_e_val += loss_val
             total_val +=1
             # Update val metrics
+            
             predicted_labels = tf.argmax(val_logits, axis=1)
             y_true = tf.argmax(y_batch_val, axis = 1)
             val_acc_metric.update_state(y_true, predicted_labels)
-        val_acc = val_acc_metric.result()
+            val_acc = val_acc_metric.result()
+            f1_val.update_state(y_batch_val, val_logits)
+            f1_score_val = f1_score(y_true=y_true, y_pred=predicted_labels, average='macro')
+            acc_e_val += val_acc 
+            f1_e_val +=f1_score_val
+        f1_val.reset_states()
         val_acc_metric.reset_states()
-        print("Validation acc: %.4f" % (float(val_acc),))
+        print("Validation acc: %.4f" % (float(acc_e_val/total_val),))
         print("Validation loss: %.4f" % (float(loss_e_val/total_val),))
         print("Validation Lipchitz_loss_fn: %.4f" % (float(l_val_fn/l_v_step),))
         print("Validation Lipchitz_model: %.4f" % (float(l_val_model/l_v_step),))
+        print("Validation f1-score: %.4f" % (float(f1_e_val/total_val),))
+        
         #log experiment runtime.
-        experiment.log_metric("Val Accuracy", float(val_acc), epoch=epoch)
+        experiment.log_metric("Val Accuracy", float(val_acc/total_val), epoch=epoch)
         experiment.log_metric("Val Loss", float(loss_e_val/total_val), epoch=epoch)
+        experiment.log_metric("Val F1-score", float(f1_e_val/total_val), epoch=epoch)
         experiment.log_metric("Val L_Loss", float(l_val_fn/l_v_step), epoch=epoch)
         experiment.log_metric("Val L_model", float(l_val_model/l_v_step), epoch=epoch, )
         time_taken = time.time() - start_time
@@ -188,7 +218,8 @@ def train_model(model,
         print("=======================================================")
 
         history["Val_loss"].append(float(loss_e_val/total_val))
-        history["Val_acc"].append(val_acc)
+        history["Val_acc"].append(float(val_acc/total_val))
+        history["Val_f1_score"].append(float(f1_e_val/total_val))
         history["Val_L_loss"].append(float(l_val_fn/l_v_step))
         history["Val_L_model"].append(float(l_val_model/l_v_step))
         history['Time'].append(time_taken)
@@ -217,6 +248,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 def test_model(test_set, model, loss_fn,batch_size=512):
     acc_metric.reset_states()
     loss_e_test = 0
+    acc_e_test = 0
+    f1_e_test = 0
     l_test_fn = 0
     l_test_model = 0
     total_test = 0
@@ -257,11 +290,17 @@ def test_model(test_set, model, loss_fn,batch_size=512):
         y_pred_total.append(predicted_labels)
         y_true_total.append(y_true)
         acc_metric.update_state(y_true, predicted_labels)
-    acc = acc_metric.result()
-    acc_metric.reset_states()
+        f1_metric.update_state(y_batch,test_logits)
+        acc = acc_metric.result()
+        acc_e_test += acc
+        acc_metric.reset_states()
+        f1_score_test = f1_score(y_true=y_true, y_pred=predicted_labels, average='macro')
+        f1_e_test += f1_score_test
+        f1_metric.reset_states()
     print("=====================RESULT===============================")
-    print("Test acc: %.4f" % (float(acc),))
+    print("Test acc: %.4f" % (float(acc_e_test/total_test),))
     print("Test loss: %.4f" % (float(loss_e_test/total_test),))
+    print("Test f1-score: %.4f" % (float(f1_e_test/total_test),))
     print("Test Lipchitz_loss_fn: %.4f" % (float(l_test_fn/l_v_step),))
     print("Test Lipchitz_model: %.4f" % (float(l_test_model/l_v_step),))
     time_taken = time.time() - start_time
@@ -269,7 +308,8 @@ def test_model(test_set, model, loss_fn,batch_size=512):
     print("=======================================================")
     
     results.append((float(loss_e_test/total_test)))
-    results.append((float(acc)))
+    results.append((float(acc_e_test/total_test)))
+    results.append((float(f1_e_test/total_test)))
     results.append((float(l_test_fn/l_v_step)))
     results.append((float(l_test_model/l_v_step)))
     results.append(time_taken)
