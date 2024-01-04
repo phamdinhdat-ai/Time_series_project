@@ -54,6 +54,10 @@ class MLP(object):
             x = layers.Dense(unit, activation = 'tanh')(x)
             if self.normalizer == "batch_norm":
                 x = layers.BatchNormalization()(x)
+            elif self.normalizer == "layer_norm":
+                    x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+            elif self.normalizer == "norm":
+                    x = layers.Normalization()(x)
             else:
                 pass
             x = layers.Dropout(self.dropout)(x)

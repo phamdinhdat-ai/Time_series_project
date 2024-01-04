@@ -50,8 +50,12 @@ class LSTM_baseline(keras.Model):
         for hidden in self.hidden_size:
             x, h_state, c_state = layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers, return_state=True)(x)
             
-            if self.normalizer is not None:
-                x = layers.BatchNormalization()(h_state)
+            if self.normalizer == "batch_norm":
+                x = layers.BatchNormalization()(x)
+            elif self.normalizer == "layer_norm":
+                    x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+            elif self.normalizer == "norm":
+                    x = layers.Normalization()(x)
             else:
                 x = h_state
         x = layers.Dropout(self.dropout)(x)

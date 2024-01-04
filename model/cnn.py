@@ -58,6 +58,10 @@ class CNN(keras.Model):
             x =layers.Conv1D(filters=filter, kernel_size=self.kernel_size, activation='relu', kernel_regularizer=self.regularizers)(x)
             if self.normalizer == "batch_norm":
                 x = layers.BatchNormalization()(x)
+            elif self.normalizer == "layer_norm":
+                    x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+            elif self.normalizer == "norm":
+                    x = layers.Normalization()(x)
             else:
                 pass
             # x = layers.Dropout(self.dropout)(x)
@@ -67,6 +71,10 @@ class CNN(keras.Model):
             x = layers.Dense(unit, activation = 'tanh', kernel_regularizer=self.regularizers)(x)
             if self.normalizer == "batch_norm":
                 x = layers.BatchNormalization()(x)
+            elif self.normalizer == "layer_norm":
+                    x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+            elif self.normalizer == "norm":
+                    x = layers.Normalization()(x)
             else:
                 pass
             x = layers.Dropout(self.dropout)(x)

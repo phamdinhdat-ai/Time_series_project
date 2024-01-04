@@ -51,8 +51,12 @@ class LSTM(keras.Model):
         for hidden in self.hidden_size:
             x = layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers)(x)
             
-            if self.normalizer is not None:
-                x = layers.BatchNormalization()(x)
+            if self.normalizer == "batch_norm":
+                    x = layers.BatchNormalization()(x)
+            elif self.normalizer == "layer_norm":
+                    x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+            elif self.normalizer == "norm":
+                    x = layers.Normalization()(x)
             else:
                 pass
             x = layers.Dropout(self.dropout)(x)
@@ -61,8 +65,12 @@ class LSTM(keras.Model):
         
         for unit in self.mlp_units:
             x = layers.Dense(unit, activation = self.activation, kernel_regularizer=self.regularizers)(x)
-            if self.normalizer is not None:
-                x = layers.BatchNormalization()(x)
+            if self.normalizer == "batch_norm":
+                    x = layers.BatchNormalization()(x)
+            elif self.normalizer == "layer_norm":
+                    x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+            elif self.normalizer == "norm":
+                    x = layers.Normalization()(x)
             else:
                 pass
             x = layers.Dropout(self.dropout)(x)

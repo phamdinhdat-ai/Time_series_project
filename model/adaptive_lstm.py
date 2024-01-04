@@ -3,6 +3,7 @@ from time import time
 import json
 import logging
 import keras
+import tensorflow as tf
 from keras import layers
 from keras.models import Model
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
@@ -46,12 +47,26 @@ class AdaptiveLSTM(keras.Model):
         x = layers.Conv1D(filters=self.filters, kernel_size=self.kernel_size, strides=self.strides)(x)
         if self.normalizer == "batch_norm":
                 x = layers.BatchNormalization()(x)
+        elif self.normalizer == "layer_norm":
+                x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+        elif self.normalizer == "norm":
+                x = tf.keras.layers.Normalization()(x)
+        # elif self.normalizer == "instance_norm":
+        #         x = tf.keras.layers.InstanceNormalization(axis=-1, 
+        #                         center=True, 
+        #                         scale=True,
+        #                         beta_initializer="random_uniform",
+        #                         gamma_initializer="random_uniform")(x)
         else:
-                pass 
+                pass  
         for hidden in self.hidden_size:
             x, h_state, c_state = layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers, return_state=True)(x)
             if self.normalizer == "batch_norm":
-                x = layers.BatchNormalization()(h_state)
+                x = layers.BatchNormalization()(x)
+            elif self.normalizer == "layer_norm":
+                    x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+            elif self.normalizer == "norm":
+                    x = layers.Normalization()(x)
             else:
                 x = h_state
         x = layers.Dropout(self.dropout)(x)
