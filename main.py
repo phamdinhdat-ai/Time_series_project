@@ -310,7 +310,7 @@ for i, (person, metrics) in enumerate(history["test_neck"].items()):
   print(person, metrics)
   arr_neck[i][0]  = metrics["Loss"]
   arr_neck[i][1] = metrics["Acc"]
-  arr_neck[i][2] = metrics["Acc"]
+  arr_neck[i][2] = metrics["F1-Score"]
   arr_neck[i][3] = metrics["Lipschitz Loss"]
   arr_neck[i][4] = metrics["Lipshitz model"]
   persons_neck.append(person)
