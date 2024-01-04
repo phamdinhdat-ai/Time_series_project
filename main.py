@@ -2,6 +2,7 @@ import pickle
 import os
 import pandas as pd 
 import tensorflow as tf
+import tensorflow_addons as tfa
 from model.lstm import LSTM
 from model.adaptive_lstm import AdaptiveLSTM
 from config.lstm import Config 
@@ -164,7 +165,7 @@ history, model = train_model(model=model, dataset=train_dataset, loss_fn=loss_fn
 print("=====Training Done !====")
 history["test"]  = dict()
 #test progress
-
+print(loss_fn.__class__.__name__)
 if opt.scenario == "sample_divide":
     scenario = opt.scenario
     print("<====== Evaluate on testset =======>")
@@ -173,14 +174,14 @@ if opt.scenario == "sample_divide":
     ds_test = ds_test.batch(BATCH_SIZE)
     cl_report, cf_matrix, results = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
     print("Result on testste: \n", results)
-    metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
+    metrics = ["Loss", "Acc", "F1-Score", "Lipschitz Loss", "Lipshitz model", "Time"]
     history["test"]['cl_report'] = cl_report
     history["test"]['cf_matrix'] = cf_matrix      
     for metric, result in zip(metrics, results):
         history["test"][metric] = result
 
 
-    cols = ["Person", "Loss", "Acc", "L Loss", "L model"]
+    cols = ["Person", "Loss", "F1-Score", "Acc", "L Loss", "L model"]
         
     df_total = dict()
     df_total['Person'] = "Eval All"
@@ -207,7 +208,7 @@ if opt.scenario == "sample_divide":
         ds_test = ds_test.batch(BATCH_SIZE)
         cl_report, cf_matrix,results_neck = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
         print(f"Result on {name}'s data(neckdata): \n", results_neck)
-        metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
+        metrics = ["Loss", "Acc","F1-Score", "Lipschitz Loss", "Lipshitz model", "Time"]
         history["test_neck"][name[:-4]] = dict()
         history["test_neck"][name[:-4]]['cl_report'] = cl_report
         history["test_neck"][name[:-4]]['cf_matrix'] = cf_matrix
@@ -229,7 +230,7 @@ else:
         ds_test = ds_test.batch(BATCH_SIZE)
         cl_report, cf_matrix,results = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
         print(f"Result on {name}'s data: \n", results)
-        metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
+        metrics = ["Loss", "Acc","F1-Score", "Lipschitz Loss", "Lipshitz model", "Time"]
         history["test"][name[:-4]] = dict()
         history["test"][name[:-4]]['cl_report'] = cl_report
         history["test"][name[:-4]]['cf_matrix'] = cf_matrix   
@@ -247,7 +248,7 @@ else:
         ds_test = ds_test.batch(BATCH_SIZE)
         cl_report, cf_matrix,results = test_model(test_set=ds_test, model=model, loss_fn = loss_fn, batch_size=BATCH_SIZE)
         print(f"Result on {name}'s data(neckdata): \n", results)
-        metrics = ["Loss", "Acc", "Lipschitz Loss", "Lipshitz model", "Time"]
+        metrics = ["Loss", "Acc", "F1-Score","Lipschitz Loss", "Lipshitz model", "Time"]
         history["test_neck"][name[:-4]] = dict()
         history["test_neck"][name[:-4]]['cl_report'] = cl_report
         history["test_neck"][name[:-4]]['cf_matrix'] = cf_matrix
@@ -266,28 +267,29 @@ else:
 # model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
 # print(history)
     import numpy as np
-    arr  = np.zeros((4, 4))
+    arr  = np.zeros((5,4))
     persons = []
     for i, (person, metrics) in enumerate(history["test"].items()):
         print(person, metrics)
         arr[i][0]  = metrics["Loss"]
         arr[i][1] = metrics["Acc"]
-        arr[i][2] = metrics["Lipschitz Loss"]
-        arr[i][3] = metrics["Lipshitz model"]
+        arr[i][2] = metrics["F1-Score"]
+        arr[i][3] = metrics["Lipschitz Loss"]
+        arr[i][4] = metrics["Lipshitz model"]
         persons.append(person)
 
 
-    mean = np.mean(arr, axis = 0 ).reshape(1, 4)
-    std =  np.std(arr, axis = 0).reshape(1,4)
+    mean = np.mean(arr, axis = 0 ).reshape(1, 5)
+    std =  np.std(arr, axis = 0).reshape(1,5)
     print("mean_exp", mean)
     print("std_exp", std)
     persons.append("Mean")
     persons.append("Standard Deviation")
     df_np = np.concatenate([arr, mean, std], axis = 0 )
-    cols = ["Person", "Loss", "Acc", "L Loss", "L model"]
+    cols = ["Person", "Loss","F1-Score", "Acc", "L Loss", "L model"]
     df_dict = dict()
     df_dict["Person"] = persons
-    for i in range(4):
+    for i in range(5):
         df_dict[cols[i+1]] = df_np[:, i]
 
 
@@ -301,21 +303,22 @@ else:
 
 
 import numpy as np
-arr_neck  = np.zeros((2, 4))
-cols = ["Person", "Loss", "Acc", "L Loss", "L model"]
+arr_neck  = np.zeros((2, 5))
+cols = ["Person", "Loss","F1-Score", "Acc", "L Loss", "L model"]
 persons_neck = []
 for i, (person, metrics) in enumerate(history["test_neck"].items()):
   print(person, metrics)
   arr_neck[i][0]  = metrics["Loss"]
   arr_neck[i][1] = metrics["Acc"]
-  arr_neck[i][2] = metrics["Lipschitz Loss"]
-  arr_neck[i][3] = metrics["Lipshitz model"]
+  arr_neck[i][2] = metrics["Acc"]
+  arr_neck[i][3] = metrics["Lipschitz Loss"]
+  arr_neck[i][4] = metrics["Lipshitz model"]
   persons_neck.append(person)
   
 print(arr_neck)
 df_neck = dict()
 df_neck['Person'] = persons_neck
-for i in range(4):
+for i in range(5):
   df_neck[cols[i+1]] = arr_neck[:, i]
   
   
