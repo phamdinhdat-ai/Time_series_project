@@ -267,7 +267,7 @@ else:
 # model.save(f"./checkpoint/checkpoint_{opt.model_type}_{opt.data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}/{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}.keras")
 # print(history)
     import numpy as np
-    arr  = np.zeros((5,4))
+    arr  = np.zeros((3,5))
     persons = []
     for i, (person, metrics) in enumerate(history["test"].items()):
         print(person, metrics)
