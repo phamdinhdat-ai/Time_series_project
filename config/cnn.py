@@ -10,7 +10,7 @@ class Config:
     save_file =  "checkpoint/lstm_model/"
     activation = 'tanh'
     regularizers = 'l1'
-    normalizer = 'batch norm'
+    normalizer = 'batch_norm'
     lr  = 0.001,
     optimizer = 'adam',
     loss_fn = 'categorical-crossentropy'
