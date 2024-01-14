@@ -33,14 +33,6 @@ class CNN(keras.Model):
         self.optimizer = self.config.optimizer
         self.loss_fn = self.config.loss_fn
 
-       
-        if self.config.normalizer == "batch_norm":
-            self.normalizer = layers.BatchNormalization()
-        elif self.config.normalizer == "layer_norm":
-            self.normalizer = layers.LayerNormalization()
-        else:
-            self.normalizer = None
-
 
         if self.config.regularizers == 'l1':
             self.regularizers = regularizers.L1(l1=0.1)
