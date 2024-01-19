@@ -69,6 +69,7 @@ class AdaptiveLSTM(keras.Model):
                     x = layers.Normalization()(x)
             else:
                 x = h_state
+        x = layers.Flatten()(x)
         x = layers.Dropout(self.dropout)(x)
         out = layers.Dense(self.n_classes, activation='softmax')(x)
         model = Model(inputs = input, outputs = out)
