@@ -60,7 +60,7 @@ if model_type == "lstm":
     config.timestep = opt.sequence_length
     model_lstm = LSTM(config=config)
     model = model_lstm.build()
-    print(model.summary())
+    
 if model_type =='cnn':
     #set up training
     # load model with configure
@@ -74,16 +74,17 @@ if model_type =='cnn':
     config.normalizer = opt.normalizer
     model_cnn = CNN(config=config)
     model = model_cnn.build()
-    print(model.summary())
+    
 if model_type == 'mlp':
     from model.mlp import MLP
     from config.mlp import Config
     config  = Config
     config.n_classes = opt.num_classes
     config.timestep  = opt.sequence_length
+    config.normalizer = opt.normalizer
     model_mlp = MLP(config=config)
     model = model_mlp.build()
-    print(model.summary())
+    
     
 if model_type == 'baseline':
     from model.lstm_baseline import LSTM_baseline
@@ -94,7 +95,7 @@ if model_type == 'baseline':
     config.timestep  = opt.sequence_length
     model_baseline = LSTM_baseline(config=config)
     model = model_baseline.build()
-    print(model.summary())
+    
     
     
 if model_type == 'adaptive_lstm':
@@ -108,7 +109,7 @@ if model_type == 'adaptive_lstm':
     config.normalizer = opt.normalizer
     model_adaptive = AdaptiveLSTM(config=config)
     model = model_adaptive.build()
-    print(model.summary())
+    
     
     
     
@@ -120,23 +121,13 @@ if model_type == 'lstm_v2':
     config.timestep  = opt.sequence_length
     model_v2 = LSTM_v2(config=config)
     model = model_v2.build()
-    print(model.summary())
+    
 
-else: 
-    from model.lstm import LSTM
-    from config.lstm import Config
-    #set up training
-    # load model with configure
-    config = Config
-    config.n_classes = opt.num_classes 
-    config.timestep = opt.sequence_length
-    config.normalizer = opt.normalizer
-    model_lstm = LSTM(config=config)
-    model = model_lstm.build()
+
 
 if opt.check_point is not None:
     model = tf.keras.models.load_model(str(opt.check_point))
-
+print(model.summary())
 #load data
 print("<=====> Training progress <=====>")
 if opt.scenario == "sample_divide":
