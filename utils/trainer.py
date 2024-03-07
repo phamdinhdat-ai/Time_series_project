@@ -208,7 +208,7 @@ def train_model(model,
         print("Validation f1-score: %.4f" % (float(f1_e_val/total_val),))
         
         #log experiment runtime.
-        experiment.log_metric("Val Accuracy", float(val_acc/total_val), epoch=epoch)
+        experiment.log_metric("Val Accuracy", float(acc_e_val/total_val), epoch=epoch)
         experiment.log_metric("Val Loss", float(loss_e_val/total_val), epoch=epoch)
         experiment.log_metric("Val F1-score", float(f1_e_val/total_val), epoch=epoch)
         experiment.log_metric("Val L_Loss", float(l_val_fn/l_v_step), epoch=epoch)
@@ -218,7 +218,7 @@ def train_model(model,
         print("=======================================================")
 
         history["Val_loss"].append(float(loss_e_val/total_val))
-        history["Val_acc"].append(float(val_acc/total_val))
+        history["Val_acc"].append(float(acc_e_val/total_val))
         history["Val_f1_score"].append(float(f1_e_val/total_val))
         history["Val_L_loss"].append(float(l_val_fn/l_v_step))
         history["Val_L_model"].append(float(l_val_model/l_v_step))
