@@ -2,7 +2,6 @@ import pickle
 import os
 import pandas as pd 
 import tensorflow as tf
-import tensorflow_addons as tfa
 from model.lstm import LSTM
 from model.adaptive_lstm import AdaptiveLSTM
 from config.lstm import Config 
@@ -17,7 +16,7 @@ from utils.losses import negative_log_likelihood
 from utils.trainer import test_model
 from datetime import date
 from utils.trainer import experiment
-import keras
+
 print(tf.__version__)
 
 today = str(date.today())
@@ -112,17 +111,18 @@ if model_type == 'adaptive_lstm':
     
     
     
-    
-if model_type == 'lstm_v2':
-    from model.lstm_v2 import LSTM_v2
-    from config.lstm import Config
-    config  = Config
+if model_type == "transformers":
+    from model.transformer import Transformer
+    from config.transformers import Config
+    config = Config
     config.n_classes = opt.num_classes
     config.timestep  = opt.sequence_length
-    model_v2 = LSTM_v2(config=config)
-    model = model_v2.build()
+    config.filter = opt.filters
+    config.normalizer = opt.normalizer
+    model_transformer = Transformer(config=config)
+    model = model_transformer.build()
     
-
+    
 
 
 if opt.check_point is not None:

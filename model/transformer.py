@@ -1,0 +1,144 @@
+
+import os 
+import pandas as pd 
+import glob
+import numpy as np
+
+from datetime import datetime
+from time import time
+import json
+import logging
+
+import tensorflow as tf
+import keras
+from keras import layers
+from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
+from keras.callbacks import Callback
+
+
+class Transformer(object):
+
+    def __init__(self, config):
+        """ Initialization of the object
+        """
+
+        # Get model hyperparameters
+        self.timestep = config.timestep #Transformer_config['timestep']
+        self.n_features = config.n_features#Transformer_config['n_features']
+        self.n_classes = config.n_classes #Transformer_config['n_classes']
+
+        self.log_dir = config.log_dir #Transformer_config["log_dir"]
+        self.checkpoint_dir = config.save_file #Transformer_config["save_file"]
+
+        self.head_size = config.head_size  #Transformer_config["head_size"]
+        self.num_heads = config.num_heads #Transformer_config["num_heads"]
+        self.filter = config.filter #Transformer_config["filter"]
+        self.num_transformer_blocks = config.num_encoder_blocks # Transformer_config["num_encoder_blocks"]
+        self.mlp_units = config.mlp_units #Transformer_config["mlp_units"]
+        self.mlp_dropout= config.drop_out #Transformer_config["drop_out"]
+        self.dropout= config.drop_out #Transformer_config["drop_out"]
+        self.activation = config.activation #Transformer_config["activation"]
+        self.lr  = config.lr #Complier['lr']
+        self.optimizer  = config.optimizer # Complier['optimizer'][0]
+        self.loss_fn = config.loss_fn
+    def transformer_encoder(self,
+        inputs):
+
+        # Normalization and Attention
+        x = layers.LayerNormalization(epsilon=1e-6)(inputs)
+        x = layers.MultiHeadAttention(
+        key_dim=self.head_size, num_heads=self.num_heads, dropout=self.dropout)(x, x)
+        x = layers.Dropout(self.dropout)(x)
+
+        res = x + inputs
+
+        # Feed Forward Part
+        x = layers.LayerNormalization(epsilon=1e-6)(res)
+        x = layers.Conv1D(filters=self.filter, kernel_size=1, activation='relu')(x)
+        x = layers.Dropout(self.dropout)(x)
+        x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
+        return x + res
+
+
+    def build(self):
+        """ Build the model architecture
+        """
+
+        inputs = keras.Input(shape=(self.timestep, self.n_features))
+        x = inputs
+        for _ in range(self.num_transformer_blocks):
+            x = self.transformer_encoder(x)
+
+        # x = layers.GlobalAveragePooling1D(data_format="channels_first")(x)
+        x = layers.Flatten()(x)
+        for dim in self.mlp_units:
+            x = layers.Dense(dim, activation=self.activation)(x)
+            x = layers.Dropout(self.mlp_dropout)(x)
+
+        # output layer
+        outputs = layers.Dense(self.n_classes, activation='softmax')(x)
+        
+        
+        return keras.Model(inputs, outputs)
+
+
+
+#     def train(self,
+#         X_train,
+#         y_train,
+#         X_val, 
+#         y_val,
+#         epochs=200,
+#         batch_size=64):
+#         self.model = self.build()
+#         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.lr),
+#                            loss = self.loss_fn,
+#                            metrics= ["acc",
+#                            tf.keras.metrics.Precision(),
+#                            tf.keras.metrics.Recall(),
+#                            tf.keras.metrics.AUC()]
+#                            )
+#         # print(self.model.summary())
+
+#         # Stop training if error does not improve within 50 iterations
+#         early_stopping_monitor = EarlyStopping(patience=50, restore_best_weights=True)
+
+#         # Save the best model ... with minimal error
+#         self.filepath = self.checkpoint_dir +"Transformer_6block_4head.best.hdf5"
+#         checkpoint = ModelCheckpoint(self.filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+
+#         callback_history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
+#                              validation_data = [X_val, y_val],
+#                              verbose=1,
+#                              callbacks=[early_stopping_monitor,checkpoint])
+           
+#                              #callbacks=[PlotLossesKeras(), early_stopping_monitor, checkpoint])
+#         import pickle
+#         with open('results_transformer.pkl', 'wb') as f:
+#             pickle.dump(callback_history.history, f)  
+#         return callback_history
+#         # return callback_history
+
+#     def summary(self):
+#       self.model = self.build()
+#       print(self.model.summary())
+#     def evaluate(self,
+#         X_test,
+#         y_test):
+#         # y_pred = self.model.predict(X_test)
+#         # result = self.model.evaluate(X_test, y_test)
+#         from sklearn.metrics import classification_report 
+#         import numpy as np
+#         from keras.models import load_model
+#         model = load_model(self.filepath)
+#         result = model.evaluate(X_test, y_test)
+#         y_pred = model.predict(X_test)
+#         test_y_tf = np.argmax(y_test, axis=1)
+#         pred_y_tf = np.argmax(y_pred, axis=1)
+#         print("Classification Report:\n ", classification_report(pred_y_tf, test_y_tf),"\n")
+#         return result, y_pred
+
+
+
+# # model = Transformer()
+# # model.summary()
