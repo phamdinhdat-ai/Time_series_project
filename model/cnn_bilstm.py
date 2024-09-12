@@ -3,21 +3,24 @@ from time import time
 import json
 import logging
 import keras
+import tensorflow as tf
 from keras import layers
 from keras.models import Model
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 from keras import regularizers
 import pickle
-from .batchnorm import BatchNorm
-class LSTM_v2(keras.Model):
+# from config.adaptive_lstm import Config
+class CNNBiLSTM(keras.Model):
     def __init__(self, config):
-        super(LSTM_v2, self).__init__()
+        super(CNNBiLSTM, self).__init__()
         self.config = config
         self.timestep = self.config.timestep
         self.n_features = self.config.n_features
         self.n_classes  = self.config.n_classes 
         self.hidden_size = self.config.hidden_size
-        self.mlp_units =  self.config.mlp_units
+        self.kernel_size = self.config.kernel_size
+        self.strides = self.config.strides
+        self.filters = self.config.filters
         self.dropout = self.config.dropout 
         self.log_dir = self.config.log_dir
         self.save_file = self.config.save_file
@@ -27,13 +30,7 @@ class LSTM_v2(keras.Model):
         self.lr  = self.config.lr
         self.optimizer = self.config.optimizer
         self.loss_fn = self.config.loss_fn
-        
-        if self.config.normalizer == "batch_norm":
-            self.normalizer = layers.BatchNormalization()
-        elif self.config.normalizer == "layer_norm":
-            self.normalizer = layers.LayerNormalization()
-        else:
-            self.normalizer = None
+        self.normalizer = self.config.normalizer
 
 
         if self.config.regularizers == 'l1':
@@ -46,40 +43,30 @@ class LSTM_v2(keras.Model):
             self.regularizers = None
     def build(self):
         input = keras.Input(shape=(self.timestep, self.n_features))
-
         x = input
-        for hidden in self.hidden_size:
-            x , h_state, c_state= layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers, return_state=True)(x)
-            
-            if self.normalizer is not None:
-                x = layers.BatchNormalization()(h_state)
-            else:
-                x = h_state
-            x = layers.Dropout(self.dropout)(x)
-
-        # x = layers.Flatten()(x)
-        
-        for unit in self.mlp_units:
-            x = layers.Dense(unit, activation = self.activation, kernel_regularizer=self.regularizers)(x)
-            if self.normalizer is not None:
+        x = layers.Conv1D(filters=self.filters, kernel_size=self.kernel_size, strides=self.strides, padding='same')(x)
+        if self.normalizer == "batch_norm":
                 x = layers.BatchNormalization()(x)
-            else:
-                pass
-            x = layers.Dropout(self.dropout)(x)
-
+        elif self.normalizer == "layer_norm":
+                x = layers.LayerNormalization(axis= -1, center=True , scale=True)(x)
+        elif self.normalizer == "norm":
+                x = tf.keras.layers.Normalization()(x)
+        else:
+                pass  
+        # x = layers.MaxPool1D(pool_size=3, padding='valid', strides=1)(x)
+        
+        for hidden in self.hidden_size:
+                # x = layers.BatchNormalization()(x)
+                x, h_state, _,   c_state, _ = layers.Bidirectional(layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers, return_state=True))(x)
+                x = layers.BatchNormalization()(x)
+                # x = layers.Reshape((hidden*2, 1), input_shape = (hidden*2, ))
+                x = layers.MaxPool1D(pool_size=3, padding='valid', strides=1)(x)
+                
+               
+        x = layers.BatchNormalization()(x)
+        x = layers.GlobalAveragePooling1D()(x)
+        x = layers.Dropout(self.dropout)(x)
         out = layers.Dense(self.n_classes, activation='softmax')(x)
         model = Model(inputs = input, outputs = out)
 
         return model 
-    
-
-
-#TODO: 
-
-
-# 1. CNN1d + BiLSTM
-# 2. CNN1d + GRU
-# 3. CNN1d + BiLSTM + Attention
-# 4. CNN 1d + Transfomer
-# 5. Transfomer
-

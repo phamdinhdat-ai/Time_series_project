@@ -122,6 +122,42 @@ if model_type == "transformers":
     model_transformer = Transformer(config=config)
     model = model_transformer.build()
     
+if model_type == "cnn_bilstm":
+    from model.cnn_bilstm import CNNBiLSTM
+    from config.cnn_bilstm import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    config.filters = opt.filters
+    config.kernel_size = opt.kernel_size
+    config.normalizer = opt.normalizer
+    model_cnnlstm = CNNBiLSTM(config=config)
+    model = model_cnnlstm.build()
+
+if model_type == "cnn_bilstm_att":
+    from model.cnn_bilstm_att import CNNBiLSTMAttention
+    from config.cnn_bilstm import Config
+    
+    config = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    config.filters = opt.filters
+    config.kernel_size = opt.kernel_size
+    config.normalizer = opt.normalizer
+    model_cnnlstmatt = CNNBiLSTMAttention(config=config)
+    model = model_cnnlstmatt.build()
+
+if model_type   == "cnn_gru":
+    from model.cnn_gru import CNNGRU
+    from config.cnn_bilstm import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    config.filters = opt.filters
+    config.kernel_size = opt.kernel_size
+    config.normalizer = opt.normalizer
+    model_cnngru = CNNGRU(config=config)
+    model = model_cnngru.build()
     
 
 
