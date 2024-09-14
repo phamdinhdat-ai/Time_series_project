@@ -7,6 +7,9 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.utils import to_categorical
 import tensorflow as tf 
 
+np.random.seed(42)
+tf.random.set_seed(42)
+
 
 
 def load_from_folder(folder_path, sequence_length=20, overlap= 0.4, valid_ratio = 0.2):
@@ -45,7 +48,7 @@ def load_and_process_data(file_path, sequence_length= 20, overlap = 0.3,  valid_
     y = to_categorical(sequence_labels)
 
     if valid_ratio is not None:
-        X_train, X_val, y_train, y_val = train_test_split(X,y, test_size=valid_ratio, shuffle=True)
+        X_train, X_val, y_train, y_val = train_test_split(X,y, test_size=valid_ratio, shuffle=True, random_state=42)
         return X_train, X_val, y_train, y_val 
     return X, y
 

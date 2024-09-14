@@ -17,6 +17,9 @@ from utils.trainer import test_model
 from datetime import date
 from utils.trainer import experiment
 
+
+np.random.seed(42)
+tf.random.set_seed(42)
 print(tf.__version__)
 
 today = str(date.today())
