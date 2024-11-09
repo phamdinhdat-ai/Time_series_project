@@ -5,3 +5,5 @@ matplotlib
 comet_ml 
 pandas 
 keras
+tensorflow_addons
+tensorflow_hub
