@@ -1,6 +1,7 @@
 import pickle
 import os
 import pandas as pd 
+import numpy as np
 import tensorflow as tf
 from model.lstm import LSTM
 from model.adaptive_lstm import AdaptiveLSTM
@@ -17,9 +18,14 @@ from utils.trainer import test_model
 from datetime import date
 from utils.trainer import experiment
 
-
-np.random.seed(42)
-tf.random.set_seed(42)
+opt = parse_opt(True)
+print("=" * 50)
+for arg in vars(opt):
+    print(arg, '=',getattr(opt, arg))
+print("=" * 50)
+np.random.seed(opt.seed)
+tf.random.set_seed(opt.seed)
+print("Original Seed: ", opt.seed)
 print(tf.__version__)
 
 today = str(date.today())
@@ -29,7 +35,6 @@ today = str(date.today())
 train_folder = 'data/new_data_static/trainset'
 test_path = 'data/new_data_static/testset'
 test_neck_path = 'data/necktest'
-opt = parse_opt(True)
 
 BATCH_SIZE = opt.batch_size
 EPOCHS = opt.epochs
@@ -324,7 +329,7 @@ else:
 
 
     # save test history on excel file
-    file_excel = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_history_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+    file_excel = "./work_dir/hist_seed{}_{}_{}_{}_{}_{}_{}_{}/test_history_{}_{}_{}_{}_{}_{}_seed{}.csv".format(opt.seed,model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer, opt.seed)
     os.makedirs(os.path.dirname(file_excel), exist_ok=True)
     df = pd.DataFrame(df_dict, columns=cols)
     df.to_csv(file_excel)
@@ -352,14 +357,14 @@ for i in range(5):
   df_neck[cols[i+1]] = arr_neck[:, i]
   
   
-file_excel_neck = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_neck_history_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+file_excel_neck = "./work_dir/hist_seed{}_{}_{}_{}_{}_{}_{}_{}/test_neck_history_{}_{}_{}_{}_{}_{}.csv".format(opt.seed, model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
 os.makedirs(os.path.dirname(file_excel_neck), exist_ok=True)
 df_neck_data = pd.DataFrame(df_neck, columns=cols)
 df_neck_data.to_csv(file_excel_neck)
 
 
 
-filename = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}_{}_{}.pkl".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+filename = "./work_dir/hist_seed{}_{}_{}_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}_{}_{}_seed{}.pkl".format(opt.seed, model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer, opt.seed)
 os.makedirs(os.path.dirname(filename), exist_ok=True)
 with open(filename, 'wb') as  f:
     pickle.dump(history, f)
@@ -369,5 +374,10 @@ plot_performance(history=history, model_type=model_type, arg=opt)
 
 if __name__ == "__main__":
     opt = parse_opt(True)
+
+    print("=" * 50)
+    for arg in vars(opt):
+        print(arg, '=',getattr(opt, arg))
+    print("=" * 50)
 
 

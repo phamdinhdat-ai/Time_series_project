@@ -4,8 +4,12 @@ from comet_ml import Experiment
 experiment = Experiment(
   api_key="7lyVL5fNdeeqtYZK9Smpz5RGX",
   project_name="journal-2023",
-  workspace="datphamai"
-)
+  workspace="datphamai",
+    auto_metric_logging=True,
+    auto_param_logging=True,
+    auto_histogram_weight_logging=True,
+    auto_histogram_gradient_logging=True,
+    auto_histogram_activation_logging=True,)
 import tensorflow as tf 
 import tensorflow_addons as tfa
 
@@ -225,7 +229,7 @@ def train_model(model,
         history['Time'].append(time_taken)
         if min_val_loss > float(loss_e_val/total_val):
             bets_val = float(loss_e_val/total_val)
-            best_weights =  f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{ arg.sequence_length}_{arg.loss_fn}_{arg.normalizer}/{arg.model_type}_{today}_best.keras"
+            best_weights =  f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{ arg.sequence_length}_{arg.loss_fn}_{arg.normalizer}_seed{arg.seed}/{arg.model_type}_{today}_seed{arg.seed}_best.keras"
             os.makedirs(os.path.dirname(best_weights), exist_ok=True)
             model.save(best_weights)
             min_val_loss = float(loss_e_val/total_val)

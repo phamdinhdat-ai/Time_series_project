@@ -6,11 +6,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.utils import to_categorical
 import tensorflow as tf 
+from .parse import parse_opt
 
-np.random.seed(42)
-tf.random.set_seed(42)
+args = parse_opt(True)
 
+np.random.seed(args.seed)
+tf.random.set_seed(args.seed)
 
+print("Original Seed: ", args.seed)
 
 def load_from_folder(folder_path, sequence_length=20, overlap= 0.4, valid_ratio = 0.2):
     list_file = os.listdir(folder_path)
@@ -48,7 +51,7 @@ def load_and_process_data(file_path, sequence_length= 20, overlap = 0.3,  valid_
     y = to_categorical(sequence_labels)
 
     if valid_ratio is not None:
-        X_train, X_val, y_train, y_val = train_test_split(X,y, test_size=valid_ratio, shuffle=True, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X,y, test_size=valid_ratio, shuffle=True, random_state=args.seed)
         return X_train, X_val, y_train, y_val 
     return X, y
 
