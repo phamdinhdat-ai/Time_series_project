@@ -1,4 +1,4 @@
-tensorflow
+tensorflow==2.15.1
 scikit-learn
 numpy
 matplotlib 
@@ -6,4 +6,3 @@ comet_ml
 pandas 
 keras
 tensorflow_addons
-tensorflow_hub

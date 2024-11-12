@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-#SBATCH --job-name=Q1_50
+#SBATCH --job-name=Q1_100_150
 #SBATCH --nodes=1
 #SBATCH --nodelist=hpc24
 #SBATCH --ntasks=1
@@ -15,8 +15,8 @@
 
 pip install -r requirements.txt
 
-MAX_SEED=50
-for ((i=1; i<=$MAX_SEED; i++))
+MAX_SEED=150
+for ((i=100; i<=$MAX_SEED; i++))
 do
     python main.py --model_type adaptive_lstm --data_type static --scenario person_divide --num_classes 12 --epochs 300 --sequence_length 100 --overlap 0.4 --batch_size 512 --loss_fn nll  --normalizer batch_norm --seed $i
 
