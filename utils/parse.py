@@ -19,6 +19,7 @@ def parse_opt(known=False):
     parser.add_argument('--loss_fn', type=str, default='ce', help='chose loss function in your model')
     parser.add_argument('--check_point', type=str, default=None, help='path to model checkpoint')
     parser.add_argument('--plot', type=bool, default=True, help='plot performance')
+    parser.add_argument('--k_fold', type=int, default=5, help='set  k_fold for cross validation')
     parser.add_argument('--seed', type=int, default=42, help='set seed for reproducibility')
     
     return parser.parse_known_args()[0] if known else parser.parse_args()
