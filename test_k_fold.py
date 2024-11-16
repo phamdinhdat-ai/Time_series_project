@@ -45,7 +45,7 @@ k_folds_dir = "data/new_data_static/kfold_data"
 os.makedirs(k_folds_dir, exist_ok=True)
 list_paths = os.listdir(folder)
 
-kf = KFold(n_splits=K, shuffle=True, random_state=42)
+kf = KFold(n_splits=K, shuffle=True, random_state=opt.seed)
 BATCH_SIZE = opt.batch_size
 EPOCHS = opt.epochs
 
