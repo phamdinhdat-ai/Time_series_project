@@ -66,7 +66,8 @@ def train_model(model,
                 epochs= 100,  
                 batch_size = 512,
                 val_dataset=None,
-                arg = None):
+                arg = None,
+                fold_idx = None):
     
     history = dict(
         Loss = [],
@@ -229,7 +230,10 @@ def train_model(model,
         history['Time'].append(time_taken)
         if min_val_loss > float(loss_e_val/total_val):
             bets_val = float(loss_e_val/total_val)
-            best_weights =  f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{ arg.sequence_length}_{arg.loss_fn}_{arg.normalizer}_seed{arg.seed}/{arg.model_type}_{today}_seed{arg.seed}_best.keras"
+            if fold_idx is not None :
+                best_weights =  f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{ arg.sequence_length}_{arg.loss_fn}_{arg.normalizer}_seed{arg.seed}/fold_{fold_idx}/{arg.model_type}_{today}_seed{arg.seed}_best.keras"
+            else: 
+                best_weights =  f"./checkpoint/checkpoint_{arg.model_type}_{arg.data_type}_{arg.sequence_length}_{arg.overlap}_{ arg.sequence_length}_{arg.loss_fn}_{arg.normalizer}_seed{arg.seed}/{arg.model_type}_{today}_seed{arg.seed}_best.keras"
             os.makedirs(os.path.dirname(best_weights), exist_ok=True)
             model.save(best_weights)
             min_val_loss = float(loss_e_val/total_val)
