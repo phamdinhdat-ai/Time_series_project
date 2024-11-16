@@ -22,9 +22,9 @@ from utils.losses import negative_log_likelihood
 from utils.trainer import test_model
 from datetime import date
 from utils.trainer import experiment
+import time 
 
-
-
+date_time = time.strftime('%Y_%m_%d_%H_%M')
 
 opt = parse_opt(True)
 print("=" * 50)
@@ -41,7 +41,7 @@ folder = 'data/new_data_static/all_person/'
 K = opt.k_fold
 
 test_neck_path = 'data/necktest'
-k_folds_dir = "data/new_data_static/kfold_data"
+k_folds_dir = f"data/new_data_static/kfold_data_{date_time}"
 os.makedirs(k_folds_dir, exist_ok=True)
 list_paths = os.listdir(folder)
 
@@ -242,7 +242,7 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(list_paths)):
     optimizer = tf.keras.optimizers.Adam()
     # training progress
     print("Training Model ........")
-    history, model = train_model(model=model, dataset=train_dataset, loss_fn=loss_fn, optimizer=optimizer,epochs=EPOCHS, val_dataset=val_dataset, batch_size=BATCH_SIZE,  arg=opt)
+    history, model = train_model(model=model, dataset=train_dataset, loss_fn=loss_fn, optimizer=optimizer,epochs=EPOCHS, val_dataset=val_dataset, batch_size=BATCH_SIZE,  arg=opt, fold_idx=fold_idx)
     print("=====Training Done !====")
     history["test"]  = dict()
     #test progress
@@ -270,7 +270,8 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(list_paths)):
             df_total[cols[i+1]] = [results[i]]
         
         
-        file_excel_total = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_total_history_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+        # file_excel_total = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/fold_{}/test_total_history_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer,fold_idx, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+        file_excel_total = f"./work_dir/hist_seed{opt.seed}_{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}_{lossfn_str}_{opt.normalizer}/fold_{fold_idx}/test_total_history_{EPOCHS}_{BATCH_SIZE}_{scenario}_{today}_{lossfn_str}_{opt.normalizer}_seed{opt.seed}.csv".format(opt.seed,model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, fold_idx, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer, opt.seed)
         
         # file_excel_total = "./work_dir/hist_{}_{}_{}_{}_{}_{}_{}/test_history_eval_total_{}_{}_{}_{}_{}_{}.csv".format(model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
         os.makedirs(os.path.dirname(file_excel_total), exist_ok=True)
@@ -339,18 +340,20 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(list_paths)):
                 history["test_neck"][name[:-4]][metric] = result
             
         import numpy as np
-        arr  = np.zeros((3,5))
+        # arr  = np.zeros((3,5))
+        arrs = []
         persons = []
         for i, (person, metrics) in enumerate(history["test"].items()):
-            print(person, metrics)
-            arr[i][0]  = metrics["Loss"]
-            arr[i][1] = metrics["Acc"]
-            arr[i][2] = metrics["F1-Score"]
-            arr[i][3] = metrics["Lipschitz Loss"]
-            arr[i][4] = metrics["Lipshitz model"]
+            # print(person, metrics)
+            arrs.append([metrics["Loss"], metrics["Acc"], metrics["F1-Score"], metrics["Lipschitz Loss"], metrics["Lipshitz model"]])
+            # arr[i][0]  = metrics["Loss"]
+            # arr[i][1] = metrics["Acc"]
+            # arr[i][2] = metrics["F1-Score"]
+            # arr[i][3] = metrics["Lipschitz Loss"]
+            # arr[i][4] = metrics["Lipshitz model"]
             persons.append(person)
 
-
+        arr = np.array(arrs)
         mean = np.mean(arr, axis = 0 ).reshape(1, 5)
         std =  np.std(arr, axis = 0).reshape(1,5)
         print("mean_exp", mean)
@@ -366,7 +369,8 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(list_paths)):
 
 
         # save test history on excel file
-        file_excel = "./work_dir/hist_seed{}_{}_{}_{}_{}_{}_{}_{}/test_history_{}_{}_{}_{}_{}_{}_seed{}.csv".format(opt.seed,model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer, opt.seed)
+        
+        file_excel = f"./work_dir/hist_seed{opt.seed}_{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}_{lossfn_str}_{opt.normalizer}/fold_{fold_idx}/test_history_{EPOCHS}_{BATCH_SIZE}_{scenario}_{today}_{lossfn_str}_{opt.normalizer}_seed{opt.seed}.csv".format(opt.seed,model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, fold_idx, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer, opt.seed)
         os.makedirs(os.path.dirname(file_excel), exist_ok=True)
         df = pd.DataFrame(df_dict, columns=cols)
         df.to_csv(file_excel)
@@ -374,34 +378,37 @@ for fold_idx, (train_idx, val_idx) in enumerate(kf.split(list_paths)):
 
 
 
-    import numpy as np
-    arr_neck  = np.zeros((2, 5))
-    cols = ["Person", "Loss","F1-Score", "Acc", "L Loss", "L model"]
-    persons_neck = []
-    for i, (person, metrics) in enumerate(history["test_neck"].items()):
-        print(person, metrics)
-        arr_neck[i][0]  = metrics["Loss"]
-        arr_neck[i][1] = metrics["Acc"]
-        arr_neck[i][2] = metrics["F1-Score"]
-        arr_neck[i][3] = metrics["Lipschitz Loss"]
-        arr_neck[i][4] = metrics["Lipshitz model"]
-        persons_neck.append(person)
+    # import numpy as np
+    # arr_neck  = np.zeros((2, 5))
+    # cols = ["Person", "Loss","F1-Score", "Acc", "L Loss", "L model"]
+    # persons_neck = []
+    # for i, (person, metrics) in enumerate(history["test_neck"].items()):
+    #     print(person, metrics)
+    #     arr_neck[i][0]  = metrics["Loss"]
+    #     arr_neck[i][1] = metrics["Acc"]
+    #     arr_neck[i][2] = metrics["F1-Score"]
+    #     arr_neck[i][3] = metrics["Lipschitz Loss"]
+    #     arr_neck[i][4] = metrics["Lipshitz model"]
+    #     persons_neck.append(person)
         
-    print(arr_neck)
-    df_neck = dict()
-    df_neck['Person'] = persons_neck
-    for i in range(5):
-        df_neck[cols[i+1]] = arr_neck[:, i]
+    # print(arr_neck)
+    # df_neck = dict()
+    # df_neck['Person'] = persons_neck
+    # for i in range(5):
+    #     df_neck[cols[i+1]] = arr_neck[:, i]
     
     
-    file_excel_neck = "./work_dir/hist_seed{}_fold_index{}_{}_{}_{}_{}_{}_{}_{}/test_neck_history_{}_{}_{}_{}_{}_{}.csv".format(opt.seed, fold_idx , model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
-    os.makedirs(os.path.dirname(file_excel_neck), exist_ok=True)
-    df_neck_data = pd.DataFrame(df_neck, columns=cols)
-    df_neck_data.to_csv(file_excel_neck)
+    # file_excel_neck = "./work_dir/hist_seed{}_{}_{}_{}_{}_{}_{}_{}/fold_{}/test_neck_history_{}_{}_{}_{}_{}_{}.csv".format(opt.seed, fold_idx , model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer,fold_idx, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer)
+    # os.makedirs(os.path.dirname(file_excel_neck), exist_ok=True)
+    # df_neck_data = pd.DataFrame(df_neck, columns=cols)
+    # df_neck_data.to_csv(file_excel_neck)
 
 
+    filename = f"./work_dir/hist_seed{opt.seed}_{model_type}_{data_type}_{opt.sequence_length}_{opt.overlap}_{scenario}_{lossfn_str}_{opt.normalizer}/fold_{fold_idx}/test_history_{EPOCHS}_{BATCH_SIZE}_{scenario}_{today}_{lossfn_str}_{opt.normalizer}_seed{opt.seed}.pkl".format(opt.seed,model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, fold_idx, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer, opt.seed)
 
-    filename = "./work_dir/hist_seed{}_fold_index{}_{}_{}_{}_{}_{}_{}_{}/training_history_{}_{}_{}_{}_{}_{}_seed{}.pkl".format(opt.seed,fold_idx, model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer, EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer, opt.seed)
+    # filename = "./work_dir/hist_seed{}_{}_{}_{}_{}_{}_{}_{}/fold_{}/training_history_{}_{}_{}_{}_{}_{}_seed{}.pkl".format(opt.seed,fold_idx, model_type, data_type, opt.sequence_length, opt.overlap,scenario,lossfn_str, opt.normalizer,fold_idx,  EPOCHS, BATCH_SIZE,  scenario, today, lossfn_str, opt.normalizer, opt.seed)
+    
+    
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, 'wb') as  f:
         pickle.dump(history, f)   
