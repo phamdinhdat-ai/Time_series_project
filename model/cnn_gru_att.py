@@ -11,7 +11,7 @@ from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 from keras import regularizers
 import pickle
 from keras import backend as K
-from keras.layers.core import Permute, RepeatVector, Lambda
+from keras.layers import Permute, RepeatVector, Lambda
 from keras.layers import Multiply
 # from config.adaptive_lstm import Config
 
