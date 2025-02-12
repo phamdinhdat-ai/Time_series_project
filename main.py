@@ -167,6 +167,55 @@ if model_type   == "cnn_gru":
     model_cnngru = CNNGRU(config=config)
     model = model_cnngru.build()
     
+    
+if model_type   == "cnn_gru_bilstm":
+    from model.cnn_gru_bilstm import CNNGRUBiLSTM
+    from config.cnn_gru_bilstm import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    config.filters = opt.filters
+    config.kernel_size = opt.kernel_size
+    config.normalizer = opt.normalizer
+    model_cnngrubilstm = CNNGRUBiLSTM(config=config)
+    model = model_cnngrubilstm.build()
+
+if model_type   == "cnn_bilstm_gru":
+    from model.cnn_bilstm_gru import CNNBiLSTMGRU
+    from config.cnn_bilstm_gru import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    config.filters = opt.filters
+    config.kernel_size = opt.kernel_size
+    config.normalizer = opt.normalizer
+    model_cnn_bilstm_gru = CNNBiLSTMGRU(config=config)
+    model = model_cnn_bilstm_gru.build()
+    
+if model_type   == "cnn_gru_bilstm_att":
+    from model.cnn_gru_bilstm_att import CNNGRUBiLSTMAttention
+    from config.cnn_gru_bilstm_att import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    config.filters = opt.filters
+    config.kernel_size = opt.kernel_size
+    config.normalizer = opt.normalizer
+    model_cnn_gru_lstm_att = CNNGRUBiLSTMAttention(config=config)
+    model = model_cnn_gru_lstm_att.build()
+    
+if model_type   == "cnn_gru_att":
+    from model.cnn_gru_att import CNNGRUAttention
+    from config.cnn_gru_att import Config
+    config  = Config
+    config.n_classes = opt.num_classes
+    config.timestep  = opt.sequence_length
+    config.filters = opt.filters
+    config.kernel_size = opt.kernel_size
+    config.normalizer = opt.normalizer
+    model_cnn_gru_att = CNNGRUAttention(config=config)
+    model = model_cnn_gru_att.build()
+
 
 
 if opt.check_point is not None:
