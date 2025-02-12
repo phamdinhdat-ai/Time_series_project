@@ -58,7 +58,9 @@ class CNNGRUBiLSTM(keras.Model):
         for hidden in self.hidden_size:
                 # x = layers.BatchNormalization()(x)
                 x, h_state, c_state = layers.Bidirectional(layers.GRU(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers, return_state=True))(x)
-                x, h_state, c_state = layers.Bidirectional(layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers, return_state=True))(x)
+                x, h_state, _,   c_state, _ = layers.Bidirectional(layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers, return_state=True))(x)
+                
+                # x, h_state, c_state = layers.Bidirectional(layers.LSTM(units = hidden, activation = self.activation, return_sequences=True, kernel_regularizer=self.regularizers, return_state=True))(x)
                 x = layers.BatchNormalization()(x)
                 # x = layers.Reshape((hidden*2, 1), input_shape = (hidden*2, ))
                 x = layers.MaxPool1D(pool_size=3, padding='valid', strides=1)(x)
